@@ -1,0 +1,12 @@
+/* src/index.css */
+body {
+  margin: 0;
+  /* Цвет фона приложения VKUI */
+  /* background-color: var(--vkui--color_background_app); */
+  color: var(--vkui--color_text_primary);
+  background-color: 'red !important';
+}
+
+#root {
+  min-height: 100vh;
+}
