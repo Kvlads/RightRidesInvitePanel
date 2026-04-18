@@ -1,0 +1,32 @@
+{
+  "name": "vk-admin-bot",
+  "version": "0.0.1",
+  "main": "dist/index.js",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "build": "tsc",
+    "start:dev": "yarn prisma:generate && yarn prisma:migrate:dev && ts-node-dev --respawn --transpile-only src/index.ts",
+    "start:prod": "yarn prisma:migrate:deploy && node dist/index.js",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate:dev": "prisma migrate dev --name init",
+    "prisma:migrate:deploy": "prisma migrate deploy"
+  },
+  "devDependencies": {
+    "@types/node": "^25.6.0",
+    "@types/pg": "^8.20.0",
+    "prisma": "^7.7.0",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^6.0.3"
+  },
+  "dependencies": {
+    "@prisma/adapter-pg": "^7.7.0",
+    "@prisma/client": "^7.7.0",
+    "@vk-io/hear": "^1.1.1",
+    "@vk-io/scenes": "^1.2.1",
+    "@vk-io/session": "^2.2.1",
+    "dotenv": "^17.4.2",
+    "pg": "^8.20.0",
+    "vk-io": "^4.10.1"
+  }
+}
