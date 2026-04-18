@@ -13,6 +13,8 @@ import { SuccessPanel } from './panels/eventRegister/RegisterSuccess';
 import { ErrorPanel } from './panels/eventRegister/RegisterError';
 import { EventUserRequestsPanel } from './panels/event/EventUserRequests';
 import { RequestDetailPanel } from './panels/event/EventUserRequestDetails';
+import { AdminEventsPanel } from './panels/admin/AdminEvents';
+import { AdminEventEdit } from './panels/admin/AdminEventEdit';
 
 export const App = () => {
   const { panel: activePanel = DEFAULT_VIEW_PANELS.HOME } = useActiveVkuiLocation();
@@ -42,6 +44,9 @@ export const App = () => {
           <SuccessPanel id="event-register-success" />
           <ErrorPanel id="event-register-error" />
           <RequestDetailPanel id="event-user-request-item" />
+
+          <AdminEventsPanel id="admin-event-list" />
+          <AdminEventEdit id="admin-event-edit" />
         </View>
       </SplitCol>
       {popout}

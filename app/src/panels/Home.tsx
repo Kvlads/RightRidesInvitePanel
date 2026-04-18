@@ -39,7 +39,7 @@ export const Home: FC<HomeProps> = () => {
           <Button 
             mode="secondary"
             style={{ backgroundColor: 'black', color: 'white' }}
-            onClick={() => routeNavigator.push('persik')}
+            onClick={() => routeNavigator.push('/admin')}
           >
             Администрирование
           </Button>
