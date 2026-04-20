@@ -7,7 +7,7 @@
 Для разработки потребуется внешний хост, который через ssh-туннель будет выпускать наше приложение в интернет через ssl сертификат
 
 ```bash
-ssh -i ~/.ssh/id_u115_rsa -R 2181:localhost:8080 root@vm-4b4d6a76.na4u.ru
+ssh -i ~/.ssh/id_u115_rsa -R 2181:localhost:5173 root@vm-4b4d6a76.na4u.ru
 ```
 
 ## Выполнение миграции БД
@@ -30,9 +30,9 @@ docker-compose up -d db
 
 ### Запуск приложения в дев окружени
 
-1. В терминале /api: ```yarn dev```
+1. В терминале /api: ```cd api && yarn start:dev```
 
-2. В терминале /app: ```yarn dev```
+2. В терминале /app: ```cd app && yarn start```
 
 ## Prod
 
@@ -41,3 +41,6 @@ docker-compose up -d db
 ```bash
 docker-compose up --build
 ```
+
+Приложение имеет собственный nginx на борту.
+Для предоставления ему доступа из вне и ssl сертификата достаточно настроит nginx для проброса порта 8080
