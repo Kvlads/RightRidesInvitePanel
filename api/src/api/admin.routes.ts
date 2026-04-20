@@ -8,7 +8,10 @@ adminRouter.use(adminAuth);
 // Получить данные одного мероприятия
 adminRouter.get('/events/:id', async (req, res) => {
   const event = await prisma.event.findUnique({
-    where: { id: Number(req.params.id) }
+    where: {
+      id: Number(req.params.id),
+      isDeleted: false,
+    }
   });
   if (!event) return res.status(404).json({ error: 'Event not found' });
   res.json(event);
@@ -41,8 +44,11 @@ adminRouter.post('/events/save', async (req, res) => {
 
 // Удалить мероприятие
 adminRouter.delete('/events/:id', async (req, res) => {
-  await prisma.event.delete({
-    where: { id: Number(req.params.id) }
+  await prisma.event.update({
+    where: { id: Number(req.params.id) },
+    data: {
+      isDeleted: true,
+    }
   });
   res.json({ success: true });
 });
@@ -87,6 +93,9 @@ adminRouter.get('/events', async (req, res) => {
       title: true,
       date: true,
       image: true,
+    },
+    where: {
+      isDeleted: false,
     }
   });
   

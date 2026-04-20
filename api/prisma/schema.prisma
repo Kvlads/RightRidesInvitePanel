@@ -30,6 +30,7 @@ model Event {
   requireApproval Boolean       @default(false)
   image           String?
   isActive        Boolean       @default(true)
+  isDeleted       Boolean       @default(false)
   participants    Participant[]
   createdAt       DateTime      @default(now())
 }

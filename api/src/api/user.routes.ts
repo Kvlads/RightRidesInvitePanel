@@ -6,7 +6,10 @@ export const userRouter = Router();
 // 1. Получение списка активных мероприятий
 userRouter.get('/events', async (req, res) => {
   const events = await prisma.event.findMany({
-    where: { isActive: true },
+    where: { 
+      isActive: true,
+      isDeleted: false,
+    },
     orderBy: { date: 'asc' }
   });
   res.json(events);
@@ -15,7 +18,10 @@ userRouter.get('/events', async (req, res) => {
 // 2. Детали мероприятия
 userRouter.get('/events/:id', async (req, res) => {
   const event = await prisma.event.findUnique({
-    where: { id: Number(req.params.id) }
+    where: { 
+      id: Number(req.params.id),
+      isDeleted: false,
+    }
   });
   res.json(event);
 });
