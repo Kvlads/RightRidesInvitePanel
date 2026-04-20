@@ -10,6 +10,7 @@ import {
 } from '@vkontakte/vkui';
 import { useParams, useRouteNavigator } from '@vkontakte/vk-mini-apps-router';
 import { AdminEventData, exportParticipants, fetchAdminEvent, saveEvent, sendBroadcastMessage } from '../../services/adminApi';
+import { uploadPhoto } from '../../services/api'; // Импортируем функцию загрузки фото
 
 export const AdminEventEdit: FC<NavIdProps> = ({id}) => {
   const params = useParams<'id'>();
@@ -32,6 +33,9 @@ export const AdminEventEdit: FC<NavIdProps> = ({id}) => {
 
   const [imagePreview, setImagePreview] = useState<string | undefined>();
   const [loading, setLoading] = useState(false);
+  
+  // Добавляем состояние для индикации загрузки самого изображения на сервер
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
 
   useEffect(() => {
     if (isEdit) {
@@ -57,12 +61,33 @@ export const AdminEventEdit: FC<NavIdProps> = ({id}) => {
     }
   };
 
-  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+  // Обновляем функцию обработки файла
+  const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const url = URL.createObjectURL(file);
-      setImagePreview(url);
-      setFormData((prev) => ({ ...prev, image: url }));
+      try {
+        setIsUploadingImage(true); // Включаем спиннер на кнопке "Загрузить фото"
+        
+        // Для мгновенного отклика интерфейса можно показать временный blob
+        const tempUrl = URL.createObjectURL(file);
+        setImagePreview(tempUrl);
+
+        // Физически загружаем файл на сервер
+        const serverUrl = await uploadPhoto(file);
+        
+        // Обновляем данные формы реальным путем с бэкенда (например, /uploads/xxx.webp)
+        setImagePreview(serverUrl);
+        setFormData((prev) => ({ ...prev, image: serverUrl }));
+
+      } catch (error) {
+        console.error('Ошибка при загрузке изображения обложки:', error);
+        // Если произошла ошибка, сбрасываем превью
+        setImagePreview(formData.image);
+      } finally {
+        setIsUploadingImage(false);
+        // Сбрасываем input, чтобы можно было загрузить тот же файл еще раз при ошибке
+        e.target.value = ''; 
+      }
     }
   };
 
@@ -90,6 +115,17 @@ export const AdminEventEdit: FC<NavIdProps> = ({id}) => {
       }
       setIsSending(false);
     }
+  };
+
+  // Вспомогательная функция для корректного отображения фото с бэкенда
+  const getImageUrl = (url: string) => {
+    if (url.startsWith('/')) {
+      return '/api' + url;
+    }
+    if (url.startsWith('blob:')) return url;
+    // Если используете переменные окружения для API, раскомментируйте код ниже:
+    // return `${import.meta.env.VITE_API_URL || ''}${url}`;
+    return url;
   };
 
   return (
@@ -145,13 +181,12 @@ export const AdminEventEdit: FC<NavIdProps> = ({id}) => {
               />
             </FormItem>
 
-            <FormItem 
-            >
+            <FormItem top="Описание">
               <Textarea 
                 name="description" 
                 value={formData.description} 
                 onChange={handleInputChange} 
-                placeholder="Введите  описание мероприятия..." 
+                placeholder="Введите описание мероприятия..." 
               />
             </FormItem>
 
@@ -177,13 +212,14 @@ export const AdminEventEdit: FC<NavIdProps> = ({id}) => {
                 mode="secondary"
                 accept="image/*"
                 onChange={handleFileChange}
+                loading={isUploadingImage} // Добавлен индикатор загрузки
               >
                 {imagePreview ? 'Изменить фото' : 'Загрузить фото'}
               </File>
               {imagePreview && (
                 <div style={{ marginTop: 10 }}>
                   <img
-                    src={imagePreview}
+                    src={getImageUrl(imagePreview)} // Используем хелпер для формирования корректного пути
                     alt="Preview"
                     style={{ width: '100%', borderRadius: 8, maxHeight: 200, objectFit: 'cover' }}
                   />

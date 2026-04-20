@@ -70,7 +70,7 @@ export const Home: FC<HomeProps> = () => {
               style={{ marginBottom: 10 }}
               onClick={() => routeNavigator.push(`event/${event.id}`, {})}
             >
-              <img src={event?.image} alt="Event" style={{ width: '100%', borderRadius: 8, marginBottom: 10, marginTop: 15, }} />
+              <img src={'/api'+event?.image} alt="Event" style={{ width: '100%', borderRadius: 8, marginBottom: 10, marginTop: 15, }} />
               <Box style={{ marginBottom: 10 }}>{event.date}. {event.title}</Box>
             </Button>
           ))

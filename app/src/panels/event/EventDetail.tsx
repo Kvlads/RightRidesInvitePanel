@@ -41,7 +41,7 @@ const EventDetailPanel: FC<NavIdProps> = ({ id }) => {
         ) : (
           <Group style={{ padding: '15px' }}>
             <Title level="1" style={{ marginBottom: 8 }}>{event?.title}</Title>
-            <img src={event?.image} alt="Event" style={{ width: '100%', borderRadius: 8, marginBottom: 16 }} />
+            <img src={'/api'+event?.image} alt="Event" style={{ width: '100%', borderRadius: 8, marginBottom: 16 }} />
             
             <Text style={{ marginBottom: 4 }}>Дата: <b>{event?.dateStart}</b></Text>
             <Text weight="2" style={{ marginBottom: 16 }}>Окончание регистрации: <b>{event?.regEnd}</b></Text>
