@@ -35,6 +35,7 @@ export interface RegistrationData {
   brand: string;
   passengers: string;
   photos?: string[]; // Список URL уже загруженных фото
+  type: RequestType;
 }
 
 export interface ApplicationRequest {
@@ -142,12 +143,16 @@ export const uploadPhoto = async (file: File): Promise<string> => {
  * Получение списка всех заявок текущего пользователя на конкретный ивент
  */
 export const fetchRequestsByEventId = async (eventId: number): Promise<ApplicationRequest[]> => {
-  const data = await apiClient<any[]>(`/user/events/${eventId}/my-requests`);
+  // Используйте ваш актуальный путь до эндпоинта
+  const data = await apiClient<any[]>(`/user/events/${eventId}/my-requests`); 
+  
   return data.map(r => ({
     id: r.id,
     brand: r.brand || '',
     plate: r.plate || '',
-    type: (r.passengers && parseInt(r.passengers) > 0) ? 'participant' : 'guest',
+    // Теперь мы жестко забираем тип из ответа бэкенда.
+    // Если по какой-то причине его нет, фоллбэком ставим 'participant'
+    type: r.type as RequestType || 'participant', 
     status: r.status as RequestStatus
   }));
 };
@@ -165,6 +170,7 @@ export const fetchRequestDetail = async (id: number): Promise<RequestDetail> => 
     brand: r.brand || '',
     passengers: r.passengers || '0',
     status: r.status as RequestStatus,
-    photos: r.photos?.map((p: any) => p.url) || []
+    photos: r.photos?.map((p: any) => p.url) || [],
+    type: r.type,
   };
 };

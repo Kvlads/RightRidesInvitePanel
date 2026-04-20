@@ -75,9 +75,9 @@ export const AdminEventEdit: FC<NavIdProps> = ({id}) => {
     }
   };
 
-  const handleExport = async () => {
+  const handleExport = async (type: 'guest' | 'participant') => {
     if (params?.id) {
-      await exportParticipants(Number(params.id));
+      await exportParticipants(Number(params.id), type);
     }
   };
 
@@ -215,9 +215,20 @@ export const AdminEventEdit: FC<NavIdProps> = ({id}) => {
                 size="l" 
                 stretched 
                 mode="secondary" 
-                onClick={handleExport}
+                onClick={() => handleExport('participant')}
               >
                 Экспорт участников
+              </Button>
+
+              <div style={{ height: 10 }} />
+
+              <Button 
+                size="l" 
+                stretched 
+                mode="secondary" 
+                onClick={() => handleExport('guest')}
+              >
+                Экспорт гостей
               </Button>
 
               <div style={{ height: 20 }} />

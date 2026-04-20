@@ -44,6 +44,7 @@ model Participant {
   plate       String?
   brand       String?
   passengers  String?
+  type        String   @default("participant") // "participant" или "guest"
   
   status      String   @default("pending") // "pending", "approved", "rejected"
   photos      Photo[]

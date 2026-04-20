@@ -36,8 +36,13 @@ export const saveEvent = async (data: AdminEventData, id?: number): Promise<bool
   return true;
 };
 
-export const exportParticipants = async (id: number): Promise<void> => {
-  const data = await apiClient<any[]>(`/admin/events/${id}/participants`);
+export const exportParticipants = async (id: number, type: 'guest' | 'participant'): Promise<void> => {
+  const data = await apiClient<any[]>(`/admin/events/${id}/participants`, {
+    method: 'POST',
+    body: {
+      type
+    }
+  });
   
   // Расширили заголовки для CSV
   const headers = ['Имя/ФИО', 'VK ID', 'Город', 'Автомобиль', 'Госномер', 'Пассажиров', 'Статус', 'Дата регистрации'];

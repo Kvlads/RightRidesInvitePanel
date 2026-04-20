@@ -48,9 +48,17 @@ adminRouter.delete('/events/:id', async (req, res) => {
 });
 
 // Экспорт участников (возвращаем список)
-adminRouter.get('/events/:id/participants', async (req, res) => {
+adminRouter.post('/events/:id/participants', async (req, res) => {
+  const { type } = req.body;
+
+  console.log('Export type', type)
+
   const participants = await prisma.participant.findMany({
-    where: { eventId: Number(req.params.id) },
+    where: { 
+      eventId: Number(req.params.id),
+      type,
+      status: type === 'participant' && 'approved' || 'pending',
+    },
     include: { user: true }
   });
   

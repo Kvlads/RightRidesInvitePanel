@@ -21,7 +21,8 @@ const initialFormState: RegistrationData = {
   fio: '',
   plate: '',
   brand: '',
-  passengers: ''
+  passengers: '',
+  type: 'participant',
 };
 
 export const RegisterPanel: FC<NavIdProps> = ({id}) => {
@@ -148,8 +149,9 @@ export const RegisterPanel: FC<NavIdProps> = ({id}) => {
       plate: formData.plate,
       brand: formData.brand,
       passengers: formData.passengers,
+      type: isParticipant ? 'participant' : 'guest',
       // Отправляем фото только если юзер регистрируется как участник
-      photos: isParticipant ? (photos.map((p) => p.realUrl).filter(Boolean) as string[]) : []
+      photos: isParticipant ? (photos.map((p) => p.realUrl).filter(Boolean) as string[]) : [],
     };
 
     try {
