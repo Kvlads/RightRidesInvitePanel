@@ -37,6 +37,15 @@ export default defineConfig({
   },
 
   server: {
-    allowedHosts: ['vm-4b4d6a76.na4u.ru', 'app.rightrides.ru']
+    allowedHosts: ['vm-4b4d6a76.na4u.ru', 'app.rightrides.ru'],
+    proxy: {
+      // Все запросы, начинающиеся с /api, будут перенаправлены на Node.js
+      '/api': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+        secure: false,
+      }
+    }
   },
+  
 });

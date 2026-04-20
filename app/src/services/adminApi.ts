@@ -1,4 +1,5 @@
 export const deleteEvent = (id: number): Promise<boolean> => {
+  id;
   return new Promise((resolve) => {
     setTimeout(() => {
       resolve(true);
@@ -18,6 +19,7 @@ export interface AdminEventData {
 }
 
 export const fetchAdminEvent = (id: number): Promise<AdminEventData> => {
+  id;
   return new Promise((resolve) => {
     setTimeout(() => {
       resolve({

@@ -80,6 +80,7 @@ export interface RegistrationData {
 
 // Имитация отправки формы
 export const submitRegistration = (data: RegistrationData): Promise<boolean> => {
+  data;
   return new Promise((resolve) => {
     setTimeout(() => {
       resolve(true);
@@ -114,6 +115,7 @@ export interface ApplicationRequest {
 
 // Имитация получения списка заявок по ID мероприятия
 export const fetchRequestsByEventId = (eventId: number): Promise<ApplicationRequest[]> => {
+  eventId;
   return new Promise((resolve) => {
     setTimeout(() => {
       resolve([

@@ -1,0 +1,63 @@
+version: '3.8'
+
+services:
+  # 1. DATABASE
+  db:
+    image: postgres:15-alpine
+    container_name: vk-app-db
+    restart: always
+    env_file: .env
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    ports:
+      - "5432:5432"
+    healthcheck:
+      # Используем переменные напрямую. В docker-compose переменные пишутся через $
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  # 2. API (Бэкенд)
+  api:
+    build: ./api
+    container_name: vk-app-api
+    restart: always
+    env_file: .env
+    environment:
+      # Перезаписываем DATABASE_URL из .env на внутренний адрес Docker (хост 'db')
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?schema=public
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # 3. APP (Сборщик статики фронтенда)
+  app:
+    build: ./app
+    container_name: vk-app-build
+    # Контейнер отработает один раз и скопирует файлы в volume
+    volumes:
+      - frontend_static:/web_static
+    depends_on:
+      - api
+
+  # 4. SERVER (Nginx - Единственная точка входа)
+  server:
+    build: ./nginx
+    container_name: vk-app-server
+    restart: always
+    ports:
+      - "8080:80" 
+    volumes:
+      - frontend_static:/usr/share/nginx/html:ro
+    depends_on:
+      - app
+      - api
+
+volumes:
+  frontend_static:
+  postgres_data:
