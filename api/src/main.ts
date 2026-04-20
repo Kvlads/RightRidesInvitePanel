@@ -1,3 +1,6 @@
+(BigInt.prototype as any).toJSON = function () {
+  return this.toString();
+};
 
 import * as dotenv from 'dotenv';
 import * as path from 'path';
@@ -22,7 +25,7 @@ const app = express();
 app.use(express.json());
 
 // Подключение маршрутов API
-app.use('/', apiRouter);
+app.use('/api', apiRouter);
 
 const bootstrap = async () => {
   try {

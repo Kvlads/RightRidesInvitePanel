@@ -12,7 +12,8 @@ datasource db {
 }
 
 model User {
-  id    Int     @id @default(autoincrement())
-  vkId BigInt
-  name String
+  id                  Int     @id @default(autoincrement())
+  vkId                BigInt
+  name                String
+  isBotMessagingAllow Boolean @default(false)
 }
