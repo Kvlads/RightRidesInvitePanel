@@ -19,6 +19,7 @@ export const AdminEventEdit: FC<NavIdProps> = ({id}) => {
   const [formData, setFormData] = useState<AdminEventData>({
     title: '',
     location: '',
+    description: '',
     date: Date.now(),
     regEndDate: Date.now(),
     allowGuests: false,
@@ -41,8 +42,9 @@ export const AdminEventEdit: FC<NavIdProps> = ({id}) => {
     }
   }, [isEdit, params?.id]);
 
-  const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type, checked } = e.target;
+  const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value, type, checked } = e.target as HTMLInputElement;
+    
     setFormData((prev) => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value,
@@ -140,6 +142,16 @@ export const AdminEventEdit: FC<NavIdProps> = ({id}) => {
                 value={new Date(formData.regEndDate)}
                 onChange={handleDateChange('regEndDate')}
                 enableTime={true}
+              />
+            </FormItem>
+
+            <FormItem 
+            >
+              <Textarea 
+                name="description" 
+                value={formData.description} 
+                onChange={handleInputChange} 
+                placeholder="Введите  описание мероприятия..." 
               />
             </FormItem>
 

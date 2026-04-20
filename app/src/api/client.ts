@@ -16,23 +16,26 @@ interface RequestOptions extends RequestInit {
  * Универсальный метод для отправки запросов к нашему API
  */
 export async function apiClient<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {
-  const headers: HeadersInit = {
-    'Content-Type': 'application/json',
-    // Автоматически прикрепляем подпись VK ко всем запросам
+  const headers: Record<string, string> = {
     'Authorization': `Bearer ${vkLaunchParams}`,
-    ...options.headers,
+    ...options.headers as Record<string, string>,
   };
 
-  // Если передали объект в body, превращаем его в JSON
   let body = options.body;
-  if (body && typeof body === 'object') {
+
+  // Если мы отправляем FormData (файлы), мы НЕ должны ставить Content-Type, 
+  // браузер сам подставит нужный boundary. И мы НЕ должны делать JSON.stringify
+  if (body instanceof FormData) {
+    delete headers['Content-Type'];
+  } else if (body && typeof body === 'object') {
+    headers['Content-Type'] = 'application/json';
     body = JSON.stringify(body);
   }
 
   const response = await fetch(`${BASE_URL}${endpoint}`, {
     ...options,
     headers,
-    body,
+    body: body as BodyInit,
   });
 
   if (!response.ok) {

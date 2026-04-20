@@ -10,6 +10,7 @@ export interface AdminEventData {
   requireApproval: boolean;
   image?: string;
   isActive: boolean;
+  description: string;
 }
 
 export const deleteEvent = async (id: number): Promise<boolean> => {

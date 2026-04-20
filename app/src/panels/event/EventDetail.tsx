@@ -46,23 +46,15 @@ const EventDetailPanel: FC<NavIdProps> = ({ id }) => {
             <Text style={{ marginBottom: 4 }}>Дата: <b>{event?.dateStart}</b></Text>
             <Text weight="2" style={{ marginBottom: 16 }}>Окончание регистрации: <b>{event?.regEnd}</b></Text>
             
-            <Text style={{ marginBottom: 24 }}>{event?.description}</Text>
+            <Text style={{ marginBottom: 24, whiteSpace: 'pre-wrap' }}>{event?.description}</Text>
 
-            <Text style={{ marginBottom: 8 }}>Регистрация:</Text>
             <Button 
               size="l"
               stretched
               mode="primary"
               style={{ marginBottom: 8 }}
               onClick={() => routeNavigator.push(`/event/${params?.id}/register`)}
-            >Гость</Button>
-            <Button 
-              size="l"
-              stretched
-              mode="primary"
-              style={{ marginBottom: 8 }}
-              onClick={() => routeNavigator.push(`/event/${params?.id}/register`)}
-            >Участник</Button>
+            >Регистрация</Button>
             <Button 
               size="l"
               stretched

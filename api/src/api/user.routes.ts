@@ -20,22 +20,26 @@ userRouter.get('/events/:id', async (req, res) => {
   res.json(event);
 });
 
-// 3. Регистрация на мероприятие
+// 3. Регистрация на мероприятие (создание новой заявки)
 userRouter.post('/events/:id/register', async (req, res) => {
   const eventId = Number(req.params.id);
-  const userId = req.user!.id; // ID из нашей БД, полученный в vkAuth
-  const data = req.body;
+  const userId = req.user!.id;
+  
+  const { photos, photoUrls, ...data } = req.body;
+  const incomingPhotos = Array.isArray(photos) ? photos : Array.isArray(photoUrls) ? photoUrls : [];
 
-  const registration = await prisma.participant.upsert({
-    where: {
-      eventId_userId: { eventId, userId }
-    },
-    update: { ...data },
-    create: {
+  const photosToCreate = incomingPhotos.map((url: string) => ({ url }));
+
+  // Используем .create вместо .upsert
+  const registration = await prisma.participant.create({
+    data: {
       eventId,
       userId,
       ...data,
-      status: 'pending'
+      status: 'pending',
+      photos: {
+        create: photosToCreate
+      }
     }
   });
 

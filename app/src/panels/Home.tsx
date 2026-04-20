@@ -22,7 +22,7 @@ export interface HomeProps extends NavIdProps {
 export const Home: FC<HomeProps> = () => {
   // const { photo_200, city, first_name, last_name } = { ...fetchedUser };
   const routeNavigator = useRouteNavigator();
-  const { user, isAdmin } = useAuth();
+  const { isAdmin } = useAuth();
 
   const [events, setEvents] = useState<EventData[]>([]);
   const [loading, setLoading] = useState(true);

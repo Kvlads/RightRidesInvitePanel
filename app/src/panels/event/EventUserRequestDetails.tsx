@@ -86,7 +86,7 @@ export const RequestDetailPanel: FC<NavIdProps> = ({id}) => {
                       }}
                     >
                       <img 
-                        src={photo} 
+                        src={'/api'+photo} 
                         alt={`car_photo_${index}`} 
                         style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
                       />

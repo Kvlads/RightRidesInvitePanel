@@ -34,7 +34,7 @@ export interface RegistrationData {
   plate: string;
   brand: string;
   passengers: string;
-  photoUrls?: string[]; // Список URL уже загруженных фото
+  photos?: string[]; // Список URL уже загруженных фото
 }
 
 export interface ApplicationRequest {
