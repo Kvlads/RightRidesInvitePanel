@@ -12,8 +12,52 @@ datasource db {
 }
 
 model User {
-  id                  Int     @id @default(autoincrement())
-  vkId                BigInt
+  id                  Int           @id @default(autoincrement())
+  vkId                BigInt        @unique
   name                String
-  isBotMessagingAllow Boolean @default(false)
+  isBotMessagingAllow Boolean       @default(false)
+  registrations       Participant[]
+}
+
+model Event {
+  id              Int           @id @default(autoincrement())
+  title           String
+  location        String
+  description     String?       @db.Text
+  date            DateTime
+  regEndDate      DateTime
+  allowGuests     Boolean       @default(true)
+  requireApproval Boolean       @default(false)
+  image           String?
+  isActive        Boolean       @default(true)
+  participants    Participant[]
+  createdAt       DateTime      @default(now())
+}
+
+model Participant {
+  id          Int      @id @default(autoincrement())
+  eventId     Int
+  userId      Int
+  // Поля формы регистрации
+  city        String?
+  fio         String?
+  plate       String?
+  brand       String?
+  passengers  String?
+  
+  status      String   @default("pending") // "pending", "approved", "rejected"
+  photos      Photo[]
+  createdAt   DateTime @default(now())
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, userId])
+}
+
+model Photo {
+  id            Int         @id @default(autoincrement())
+  url           String
+  participantId Int
+  participant   Participant @relation(fields: [participantId], references: [id], onDelete: Cascade)
 }

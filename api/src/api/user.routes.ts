@@ -1,0 +1,66 @@
+import { Router } from 'express';
+import { prisma } from '../prisma/client';
+
+export const userRouter = Router();
+
+// 1. Получение списка активных мероприятий
+userRouter.get('/events', async (req, res) => {
+  const events = await prisma.event.findMany({
+    where: { isActive: true },
+    orderBy: { date: 'asc' }
+  });
+  res.json(events);
+});
+
+// 2. Детали мероприятия
+userRouter.get('/events/:id', async (req, res) => {
+  const event = await prisma.event.findUnique({
+    where: { id: Number(req.params.id) }
+  });
+  res.json(event);
+});
+
+// 3. Регистрация на мероприятие
+userRouter.post('/events/:id/register', async (req, res) => {
+  const eventId = Number(req.params.id);
+  const userId = req.user!.id; // ID из нашей БД, полученный в vkAuth
+  const data = req.body;
+
+  const registration = await prisma.participant.upsert({
+    where: {
+      eventId_userId: { eventId, userId }
+    },
+    update: { ...data },
+    create: {
+      eventId,
+      userId,
+      ...data,
+      status: 'pending'
+    }
+  });
+
+  res.json({ success: true, registration });
+});
+
+// 4. Получение заявок текущего пользователя по ID ивента
+userRouter.get('/events/:id/my-requests', async (req, res) => {
+  const requests = await prisma.participant.findMany({
+    where: { 
+      eventId: Number(req.params.id),
+      userId: req.user!.id 
+    }
+  });
+  res.json(requests);
+});
+
+// 5. Детали конкретной заявки
+userRouter.get('/requests/:id', async (req, res) => {
+  const request = await prisma.participant.findFirst({
+    where: { 
+      id: Number(req.params.id),
+      userId: req.user!.id // Безопасность: только свою заявку
+    },
+    include: { photos: true }
+  });
+  res.json(request);
+});

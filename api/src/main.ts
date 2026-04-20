@@ -27,6 +27,8 @@ app.use(express.json());
 // Подключение маршрутов API
 app.use('/api', apiRouter);
 
+app.use('/api/uploads', express.static(path.join(process.cwd(), 'uploads')));
+
 const bootstrap = async () => {
   try {
     // 1. Инициализация соединения с БД

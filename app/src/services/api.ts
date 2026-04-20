@@ -1,33 +1,17 @@
-// ------------------------
-// Список ивентов
-// ------------------------
+import { apiClient } from '../api/client';
+
+// --- Вспомогательные типы ---
+export type RequestStatus = 'approved' | 'rejected' | 'pending';
+export type RequestType = 'guest' | 'participant';
+
+// --- Интерфейсы данных ---
 
 export interface EventData {
   id: number;
-  date: string;
+  date: string; // Формат DD.MM.YYYY
   title: string;
   image: string;
 }
-
-const mockEvents: EventData[] = [
-  { id: 1, date: '20.05.2026', title: 'IT Конференция', image: 'https://placehold.co/600x400/EEE/31343C' },
-  { id: 2, date: '25.05.2026', title: 'Мастер-класс по Node.js', image: 'https://placehold.co/600x400/EEE/31343C' },
-  { id: 3, date: '01.06.2026', title: 'Хакатон', image: 'https://placehold.co/600x400/EEE/31343C' },
-  { id: 4, date: '10.06.2026', title: 'Встреча разработчиков', image: 'https://placehold.co/600x400/EEE/31343C' },
-  { id: 5, date: '15.06.2026', title: 'Летний митап', image: 'https://placehold.co/600x400/EEE/31343C' },
-];
-
-export const fetchEvents = (): Promise<EventData[]> => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve(mockEvents);
-    }, 0);
-  });
-};
-
-// ------------------------
-// Информация о ивенте
-// ------------------------
 
 export interface EventDetail {
   id: number;
@@ -36,39 +20,13 @@ export interface EventDetail {
   dateStart: string;
   regEnd: string;
   description: string;
+  location: string;
+  allowGuests: boolean;
 }
-
-export const fetchEventById = (id: number): Promise<EventDetail> => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({
-        id,
-        title: 'IT Конференция',
-        image: 'https://placehold.co/600x400/EEE/31343C',
-        dateStart: '20.05.2026',
-        regEnd: '15.05.2026',
-        description: 'Масштабная конференция для разработчиков, дизайнеров и менеджеров. Обсуждаем тренды 2026 года.',
-      });
-    }, 0);
-  });
-};
 
 export interface UserStatus {
   hasNewNotifications: boolean;
 }
-
-// Имитация ответа от API
-export const fetchUserStatus = (): Promise<UserStatus> => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({ hasNewNotifications: true });
-    }, 0);
-  });
-};
-
-// ------------------------
-// Регистрация на ивент
-// ------------------------
 
 export interface RegistrationData {
   city: string;
@@ -76,34 +34,8 @@ export interface RegistrationData {
   plate: string;
   brand: string;
   passengers: string;
+  photoUrls?: string[]; // Список URL уже загруженных фото
 }
-
-// Имитация отправки формы
-export const submitRegistration = (data: RegistrationData): Promise<boolean> => {
-  data;
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve(true);
-    }, 0);
-  });
-};
-
-// Имитация загрузки файла на сервер
-export const uploadPhotoMock = (file: File): Promise<string> => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      // Возвращаем локальный URL для превью после имитации сетевой задержки
-      resolve(URL.createObjectURL(file));
-    }, 0);
-  });
-};
-
-// ------------------------
-// Заявки пользователя на ивент
-// ------------------------
-
-export type RequestStatus = 'approved' | 'rejected' | 'pending';
-export type RequestType = 'guest' | 'participant';
 
 export interface ApplicationRequest {
   id: number;
@@ -113,46 +45,126 @@ export interface ApplicationRequest {
   status: RequestStatus;
 }
 
-// Имитация получения списка заявок по ID мероприятия
-export const fetchRequestsByEventId = (eventId: number): Promise<ApplicationRequest[]> => {
-  eventId;
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve([
-        { id: 1, brand: 'Toyota Camry', plate: 'А111АА77', type: 'participant', status: 'approved' },
-        { id: 2, brand: 'BMW X5', plate: 'В222ВВ77', type: 'participant', status: 'rejected' },
-        { id: 3, brand: 'Lada Vesta', plate: 'С333СС77', type: 'guest', status: 'pending' }, // Гость
-        { id: 4, brand: 'Kia Rio', plate: 'Е444ЕЕ77', type: 'participant', status: 'pending' }, // Не просмотрена
-      ]);
-    }, 300);
-  });
-};
-
-// ------------------------
-// Получение деталей регистрации пользователя
-// ------------------------
-
 export interface RequestDetail extends RegistrationData {
   id: number;
-  photos: string[]; // Массив URL фотографий
+  status: RequestStatus;
+  photos: string[];
 }
 
-// Имитация получения детальной информации о заявке
-export const fetchRequestDetail = (id: number): Promise<RequestDetail> => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({
-        id,
-        city: 'Москва',
-        fio: 'Иванов Иван Иванович',
-        plate: 'А111АА77',
-        brand: 'Toyota Camry',
-        passengers: '2',
-        photos: [
-          'https://images.unsplash.com/photo-1550355291-bbee04a92027',
-          'https://images.unsplash.com/photo-1541899481282-d53bffe3c35d'
-        ]
-      });
-    }, 0);
+// --- Вспомогательные функции ---
+
+/**
+ * Преобразует ISO дату с бэкенда в формат DD.MM.YYYY
+ */
+const formatDate = (dateStr: string | Date): string => {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const year = d.getFullYear();
+  return `${day}.${month}.${year}`;
+};
+
+// --- Методы API ---
+
+/**
+ * Получение списка активных мероприятий для главной страницы
+ */
+export const fetchEvents = async (): Promise<EventData[]> => {
+  const data = await apiClient<any[]>('/user/events');
+  return data.map(e => ({
+    id: e.id,
+    title: e.title,
+    date: formatDate(e.date),
+    image: e.image || 'https://placehold.co/600x400/EEE/31343C'
+  }));
+};
+
+/**
+ * Получение детальной информации о мероприятии
+ */
+export const fetchEventById = async (id: number): Promise<EventDetail> => {
+  const e = await apiClient<any>(`/user/events/${id}`);
+  return {
+    id: e.id,
+    title: e.title,
+    image: e.image || 'https://placehold.co/600x400/EEE/31343C',
+    dateStart: formatDate(e.date),
+    regEnd: formatDate(e.regEndDate),
+    description: e.description || '',
+    location: e.location || '',
+    allowGuests: e.allowGuests
+  };
+};
+
+/**
+ * Получение статуса пользователя (новые уведомления и т.д.)
+ */
+export const fetchUserStatus = async (): Promise<UserStatus> => {
+  try {
+    return await apiClient<UserStatus>('/user/status');
+  } catch {
+    return { hasNewNotifications: false };
+  }
+};
+
+/**
+ * Регистрация на ивент (отправка формы)
+ */
+export const submitRegistration = async (eventId: number, data: RegistrationData): Promise<boolean> => {
+  await apiClient(`/user/events/${eventId}/register`, {
+    method: 'POST',
+    body: data
   });
+  return true;
+};
+
+/**
+ * Реальная загрузка фотографии на сервер
+ */
+export const uploadPhoto = async (file: File): Promise<string> => {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  // Важно: при отправке FormData через fetch заголовок Content-Type 
+  // браузер должен выставить сам, поэтому в apiClient мы это учли.
+  const response = await apiClient<{ url: string }>('/upload', {
+    method: 'POST',
+    body: formData,
+    // Переопределяем headers для FormData, чтобы fetch сам поставил boundary
+    headers: { 'Accept': 'application/json' } 
+  });
+
+  return response.url;
+};
+
+/**
+ * Получение списка всех заявок текущего пользователя на конкретный ивент
+ */
+export const fetchRequestsByEventId = async (eventId: number): Promise<ApplicationRequest[]> => {
+  const data = await apiClient<any[]>(`/user/events/${eventId}/my-requests`);
+  return data.map(r => ({
+    id: r.id,
+    brand: r.brand || '',
+    plate: r.plate || '',
+    type: (r.passengers && parseInt(r.passengers) > 0) ? 'participant' : 'guest',
+    status: r.status as RequestStatus
+  }));
+};
+
+/**
+ * Детальная информация о конкретной заявке (для просмотра статуса)
+ */
+export const fetchRequestDetail = async (id: number): Promise<RequestDetail> => {
+  const r = await apiClient<any>(`/user/requests/${id}`);
+  return {
+    id: r.id,
+    city: r.city || '',
+    fio: r.fio || '',
+    plate: r.plate || '',
+    brand: r.brand || '',
+    passengers: r.passengers || '0',
+    status: r.status as RequestStatus,
+    photos: r.photos?.map((p: any) => p.url) || []
+  };
 };

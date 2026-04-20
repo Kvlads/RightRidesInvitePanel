@@ -28,6 +28,8 @@ services:
     container_name: vk-app-api
     restart: always
     env_file: .env
+    volumes:
+      - ./api/uploads:/app/uploads
     environment:
       # Перезаписываем DATABASE_URL из .env на внутренний адрес Docker (хост 'db')
       - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?schema=public

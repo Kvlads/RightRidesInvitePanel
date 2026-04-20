@@ -1,16 +1,86 @@
-// src/api/admin.routes.ts
 import { Router } from 'express';
+import { prisma } from '../prisma/client';
 import { adminAuth } from '../middlewares/adminAuth.middleware';
 
 export const adminRouter = Router();
-
-// Вешаем охранника на ВСЕ роуты внутри этого файла
 adminRouter.use(adminAuth);
 
-// Теперь этот роут доступен только админам (по пути /api/admin/stats)
-adminRouter.get('/stats', (req, res) => {
-  res.json({
-    message: 'Добро пожаловать в панель управления',
-    adminName: req.user?.name
+// Получить данные одного мероприятия
+adminRouter.get('/events/:id', async (req, res) => {
+  const event = await prisma.event.findUnique({
+    where: { id: Number(req.params.id) }
   });
+  if (!event) return res.status(404).json({ error: 'Event not found' });
+  res.json(event);
+});
+
+// Создать или обновить мероприятие
+adminRouter.post('/events/save', async (req, res) => {
+  const { id, ...data } = req.body;
+  
+  const eventData = {
+    ...data,
+    // Превращаем timestamp с фронтенда в объект Date для БД
+    date: new Date(data.date),
+    regEndDate: new Date(data.regEndDate),
+  };
+
+  if (id) {
+    const updated = await prisma.event.update({
+      where: { id: Number(id) },
+      data: eventData
+    });
+    return res.json(updated);
+  } else {
+    const created = await prisma.event.create({
+      data: eventData
+    });
+    return res.json(created);
+  }
+});
+
+// Удалить мероприятие
+adminRouter.delete('/events/:id', async (req, res) => {
+  await prisma.event.delete({
+    where: { id: Number(req.params.id) }
+  });
+  res.json({ success: true });
+});
+
+// Экспорт участников (возвращаем список)
+adminRouter.get('/events/:id/participants', async (req, res) => {
+  const participants = await prisma.participant.findMany({
+    where: { eventId: Number(req.params.id) },
+    include: { user: true }
+  });
+  
+  res.json(participants.map(p => ({
+    // Если пользователь заполнил ФИО в форме, отдаем его, если нет - имя из профиля ВК
+    name: p.fio || p.user.name,
+    vkId: p.user.vkId.toString(),
+    city: p.city || 'Не указан',
+    brand: p.brand || 'Не указана',
+    plate: p.plate || 'Не указан',
+    passengers: p.passengers || '0', // Используем новое поле passengers вместо guestsCount
+    status: p.status,
+    date: p.createdAt
+  })));
+});
+
+// Получить список всех мероприятий (для панели управления)
+adminRouter.get('/events', async (req, res) => {
+  const events = await prisma.event.findMany({
+    orderBy: {
+      date: 'asc', // Сортируем по дате по возрастанию (ближайшие сначала)
+    },
+    // Выбираем только те поля, которые реально нужны для списка, чтобы не гонять лишний трафик
+    select: {
+      id: true,
+      title: true,
+      date: true,
+      image: true,
+    }
+  });
+  
+  res.json(events);
 });

@@ -6,8 +6,7 @@ import {
 } from '@vkontakte/vkui';
 import { Icon24Cancel } from '@vkontakte/icons';
 import { useRouteNavigator } from '@vkontakte/vk-mini-apps-router';
-import { EventData, fetchEvents } from '../../services/api';
-import { deleteEvent } from '../../services/adminApi';
+import { deleteEvent, EventData, fetchEvents } from '../../services/adminApi';
 
 export const AdminEventsPanel: FC<NavIdProps> = ({id}) => {
   const routeNavigator = useRouteNavigator();
