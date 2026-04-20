@@ -1,9 +1,27 @@
 // src/providers/AuthProvider.tsx
-import React, { useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 import bridge from '@vkontakte/vk-bridge';
-import { apiClient } from '../api/client';
-import { Button, Panel, PanelSpinner, Placeholder, View } from '@vkontakte/vkui';
+import { View, Panel, PanelSpinner, Placeholder, Button } from '@vkontakte/vkui';
 import { Icon56ErrorOutline } from '@vkontakte/icons';
+import { apiClient } from '../api/client';
+
+// 1. Описываем, какие данные будут лежать в нашем глобальном контексте
+interface AuthContextType {
+  user: any; // Здесь лучше использовать тип User из вашей схемы Prisma
+  isAdmin: boolean;
+}
+
+// 2. Создаем сам контекст
+const AuthContext = createContext<AuthContextType | null>(null);
+
+// 3. Создаем удобный хук, чтобы доставать данные в любом компоненте
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth должен использоваться внутри AuthProvider');
+  }
+  return context;
+};
 
 interface AuthProviderProps {
   children: React.ReactNode;
@@ -12,29 +30,26 @@ interface AuthProviderProps {
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [errorMessage, setErrorMessage] = useState<string>('');
+  
+  // 4. Добавляем состояния для пользователя и флага админа
+  const [user, setUser] = useState<any>(null);
+  const [isAdmin, setIsAdmin] = useState<boolean>(false);
 
   useEffect(() => {
     const initApp = async () => {
       try {
-        // 1. Инициализируем сам VK Bridge
         await bridge.send('VKWebAppInit');
-
-        // 2. Получаем данные пользователя из ВКонтакте
         const vkUser = await bridge.send('VKWebAppGetUserInfo');
         const fullName = `${vkUser.first_name} ${vkUser.last_name}`;
 
-        console.warn('vkUser, fullName', vkUser, fullName)
-
-        // 3. Стучимся на наш бэкенд через созданный клиент
-        // apiClient сам подставит нужные заголовки
-        const response = await apiClient<{ message: string; user: any }>('/init', {
+        const response = await apiClient<{ message: string; user: any; isAdmin: boolean }>('/init', {
           method: 'POST',
           body: { name: fullName }
         });
 
-        console.log('Пользователь авторизован:', response.user);
-        
-        // 4. Всё отлично, пускаем пользователя в приложение
+        // 5. Сохраняем полученные данные в стейт
+        setUser(response.user);
+        setIsAdmin(response.isAdmin);
         setStatus('success');
 
       } catch (error: any) {
@@ -47,7 +62,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     initApp();
   }, []);
 
-  // Экран загрузки (здесь можно подставить красивый спиннер из VK UI)
   if (status === 'loading') {
     return (
       <View activePanel="loading">
@@ -58,7 +72,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     );
   }
 
-  // Экран критической ошибки: доступ заблокирован
   if (status === 'error') {
     return (
       <View activePanel="error">
@@ -66,11 +79,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           <Placeholder
             icon={<Icon56ErrorOutline fill="var(--vkui--color_icon_negative)" />}
             title="Ошибка доступа"
-            action={
-              <Button size="m" onClick={() => window.location.reload()}>
-                Перезапустить приложение
-              </Button>
-            }
+            action={<Button size="m" onClick={() => window.location.reload()}>Перезапустить</Button>}
           >
             {errorMessage}
           </Placeholder>
@@ -79,6 +88,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     );
   }
 
-  // Если status === 'success', рендерим роутинг и страницы
-  return <>{children}</>;
+  // 6. Оборачиваем children в провайдер и передаем туда наши значения
+  return (
+    <AuthContext.Provider value={{ user, isAdmin }}>
+      {children}
+    </AuthContext.Provider>
+  );
 };

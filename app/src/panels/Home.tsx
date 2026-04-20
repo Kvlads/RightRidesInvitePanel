@@ -12,6 +12,7 @@ import {
 import { UserInfo } from '@vkontakte/vk-bridge';
 import { useRouteNavigator } from '@vkontakte/vk-mini-apps-router';
 import { EventData, fetchEvents } from '../services/api';
+import { useAuth } from '../providers/AuthProvider';
 
 export interface HomeProps extends NavIdProps {
   fetchedUser?: UserInfo;
@@ -21,6 +22,7 @@ export interface HomeProps extends NavIdProps {
 export const Home: FC<HomeProps> = () => {
   // const { photo_200, city, first_name, last_name } = { ...fetchedUser };
   const routeNavigator = useRouteNavigator();
+  const { user, isAdmin } = useAuth();
 
   const [events, setEvents] = useState<EventData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -35,15 +37,19 @@ export const Home: FC<HomeProps> = () => {
   return (
     <Panel id="home">
       <PanelHeader>
-        <div style={{ display: 'flex', justifyContent: 'flex-end', paddingRight: 10 }}>
-          <Button 
-            mode="secondary"
-            style={{ backgroundColor: 'black', color: 'white' }}
-            onClick={() => routeNavigator.push('/admin')}
-          >
-            Администрирование
-          </Button>
-        </div>
+        {isAdmin && (
+          <div style={{ display: 'flex', justifyContent: 'flex-end', paddingRight: 10 }}>
+            <Button 
+              mode="secondary"
+              style={{ backgroundColor: 'black', color: 'white' }}
+              onClick={() => routeNavigator.push('/admin')}
+            >
+              Администрирование
+            </Button>
+          </div>
+        )}
+
+        {!isAdmin && "RightRides. [less clearance - more respect]"}
       </PanelHeader>
 
       <Box style={{ maxWidth: 400, margin: '15px auto 0', padding: '0 15px' }}>

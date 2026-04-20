@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { vkAuth } from '../middlewares/vkAuth.middleware';
+import { adminRouter } from './admin.routes';
 
 export const apiRouter = Router();
 
@@ -10,10 +11,19 @@ apiRouter.get('/', (req: Request, res: Response) => {
 // Применяем middleware ко всем роутам ниже
 apiRouter.use(vkAuth);
 
+// Администрирование
+apiRouter.use('/admin', adminRouter);
+
 apiRouter.post('/init', (req, res) => {
-  // Если мы попали сюда, значит подпись верна, и req.user 100% существует
+  const adminIdsString = process.env.ADMIN_ID || '';
+  const adminIds = adminIdsString.split(',').map(id => id.trim());
+  const currentVkId = req.user!.vkId.toString();
+  
+  const isAdmin = adminIds.includes(currentVkId);
+
   res.json({ 
     message: 'Успешная авторизация', 
-    user: req.user 
+    user: req.user,
+    isAdmin 
   });
 });
