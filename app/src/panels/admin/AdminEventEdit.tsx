@@ -10,7 +10,7 @@ import {
 } from '@vkontakte/vkui';
 import { useParams, useRouteNavigator } from '@vkontakte/vk-mini-apps-router';
 import { AdminEventData, exportParticipants, fetchAdminEvent, saveEvent, sendBroadcastMessage } from '../../services/adminApi';
-import { uploadPhoto } from '../../services/api'; // Импортируем функцию загрузки фото
+import { uploadPhoto } from '../../services/api';
 
 export const AdminEventEdit: FC<NavIdProps> = ({id}) => {
   const params = useParams<'id'>();
@@ -26,6 +26,9 @@ export const AdminEventEdit: FC<NavIdProps> = ({id}) => {
     allowGuests: false,
     requireApproval: false,
     isActive: true,
+    // Добавлены новые поля со значениями по умолчанию
+    approvalText: '',
+    rejectionText: '',
   });
 
   const [broadcastMessage, setBroadcastMessage] = useState('');
@@ -34,13 +37,18 @@ export const AdminEventEdit: FC<NavIdProps> = ({id}) => {
   const [imagePreview, setImagePreview] = useState<string | undefined>();
   const [loading, setLoading] = useState(false);
   
-  // Добавляем состояние для индикации загрузки самого изображения на сервер
   const [isUploadingImage, setIsUploadingImage] = useState(false);
 
   useEffect(() => {
     if (isEdit) {
       fetchAdminEvent(Number(params?.id)).then((data) => {
-        setFormData(data);
+        setFormData((prev) => ({
+          ...prev,
+          ...data,
+          // Защита от undefined, если в старых мероприятиях этих полей еще нет
+          approvalText: data.approvalText || '',
+          rejectionText: data.rejectionText || '',
+        }));
         setImagePreview(data.image);
       });
     }
@@ -61,31 +69,24 @@ export const AdminEventEdit: FC<NavIdProps> = ({id}) => {
     }
   };
 
-  // Обновляем функцию обработки файла
   const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       try {
-        setIsUploadingImage(true); // Включаем спиннер на кнопке "Загрузить фото"
-        
-        // Для мгновенного отклика интерфейса можно показать временный blob
+        setIsUploadingImage(true);
         const tempUrl = URL.createObjectURL(file);
         setImagePreview(tempUrl);
 
-        // Физически загружаем файл на сервер
         const serverUrl = await uploadPhoto(file);
         
-        // Обновляем данные формы реальным путем с бэкенда (например, /uploads/xxx.webp)
         setImagePreview(serverUrl);
         setFormData((prev) => ({ ...prev, image: serverUrl }));
 
       } catch (error) {
         console.error('Ошибка при загрузке изображения обложки:', error);
-        // Если произошла ошибка, сбрасываем превью
         setImagePreview(formData.image);
       } finally {
         setIsUploadingImage(false);
-        // Сбрасываем input, чтобы можно было загрузить тот же файл еще раз при ошибке
         e.target.value = ''; 
       }
     }
@@ -117,14 +118,11 @@ export const AdminEventEdit: FC<NavIdProps> = ({id}) => {
     }
   };
 
-  // Вспомогательная функция для корректного отображения фото с бэкенда
   const getImageUrl = (url: string) => {
     if (url.startsWith('/')) {
       return '/api' + url;
     }
     if (url.startsWith('blob:')) return url;
-    // Если используете переменные окружения для API, раскомментируйте код ниже:
-    // return `${import.meta.env.VITE_API_URL || ''}${url}`;
     return url;
   };
 
@@ -207,19 +205,38 @@ export const AdminEventEdit: FC<NavIdProps> = ({id}) => {
               </Checkbox>
             </FormItem>
 
+            {/* НОВЫЕ ПОЛЯ ДЛЯ ТЕКСТОВ */}
+            <FormItem top="Текст приёма участника">
+              <Textarea 
+                name="approvalText" 
+                value={formData.approvalText} 
+                onChange={handleInputChange} 
+                placeholder="Например: 🎉 Ваша заявка принята! Ждем вас на мероприятии." 
+              />
+            </FormItem>
+
+            <FormItem top="Текст отказа участнику">
+              <Textarea 
+                name="rejectionText" 
+                value={formData.rejectionText} 
+                onChange={handleInputChange} 
+                placeholder="Например: 😔 К сожалению, ваша заявка была отклонена." 
+              />
+            </FormItem>
+
             <FormItem top="Изображение анонса">
               <File
                 mode="secondary"
                 accept="image/*"
                 onChange={handleFileChange}
-                loading={isUploadingImage} // Добавлен индикатор загрузки
+                loading={isUploadingImage}
               >
                 {imagePreview ? 'Изменить фото' : 'Загрузить фото'}
               </File>
               {imagePreview && (
                 <div style={{ marginTop: 10 }}>
                   <img
-                    src={getImageUrl(imagePreview)} // Используем хелпер для формирования корректного пути
+                    src={getImageUrl(imagePreview)}
                     alt="Preview"
                     style={{ width: '100%', borderRadius: 8, maxHeight: 200, objectFit: 'cover' }}
                   />

@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { prisma } from '../prisma/client';
+import { vk, sendApprovalRequestToAdmins } from '../bot'; // <-- Добавили импорт vk
 
 export const userRouter = Router();
 
@@ -50,6 +51,11 @@ userRouter.post('/events/:id/register', async (req, res) => {
   if (new Date() > new Date(event.regEndDate)) {
     return res.status(403).json({ error: 'Регистрация на данное мероприятие уже закрыта.' });
   }
+
+  // Достаем пользователя, чтобы получить его vkId для отправки сообщения
+  const currentUser = await prisma.user.findUnique({
+    where: { id: userId }
+  });
   
   const { photos, photoUrls, ...data } = req.body;
   const incomingPhotos = Array.isArray(photos) ? photos : Array.isArray(photoUrls) ? photoUrls : [];
@@ -61,12 +67,36 @@ userRouter.post('/events/:id/register', async (req, res) => {
       eventId,
       userId,
       ...data,
-      status: 'pending',
+      // Если мероприятие требует подтверждения - ставим pending, если нет - сразу approved
+      status: event.requireApproval ? 'pending' : 'approved', 
       photos: {
         create: photosToCreate
       }
     }
   });
+
+  // ЗАПУСК ЛОГИКИ БОТА
+  if (event.requireApproval) {
+    // Если требуется подтверждение и это УЧАСТНИК, отправляем на голосование админам
+    if (data.type === 'participant') {
+      sendApprovalRequestToAdmins(registration.id).catch(err => 
+        console.error('Ошибка отправки в чат админов:', err)
+      );
+    }
+  } else if (data.type === 'participant') {
+    // Если подтверждение НЕ требуется, заявка принимается автоматически.
+    // Сразу отправляем пользователю approvalText (или стандартный текст, если его нет)
+    if (currentUser && currentUser.vkId) {
+      const fallbackApproved = `🎉 Ваша заявка на мероприятие «${event.title}» принята!`;
+      const messageText = event.approvalText || fallbackApproved;
+
+      vk.api.messages.send({
+        user_id: Number(currentUser.vkId),
+        message: messageText,
+        random_id: Math.floor(Math.random() * 1e15)
+      }).catch(err => console.error('Ошибка автоматической отправки ЛС пользователю:', err));
+    }
+  }
 
   res.json({ success: true, registration });
 });

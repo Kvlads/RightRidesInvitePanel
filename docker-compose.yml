@@ -39,7 +39,11 @@ services:
 
   # 3. APP (Сборщик статики фронтенда)
   app:
-    build: ./app
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+      args:
+        - VITE_GROUP_ID=${VITE_GROUP_ID}
     container_name: vk-app-build
     # Контейнер отработает один раз и скопирует файлы в volume
     volumes:

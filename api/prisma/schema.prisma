@@ -33,6 +33,8 @@ model Event {
   isDeleted       Boolean       @default(false)
   participants    Participant[]
   createdAt       DateTime      @default(now())
+  approvalText  String?         @db.Text
+  rejectionText String?         @db.Text
 }
 
 model Participant {
@@ -53,6 +55,9 @@ model Participant {
 
   event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
   user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  vkAttachments String?  @db.Text // Хранит строку "photo123_456,photo123_457"
+  votes         Vote[]
 }
 
 model Photo {
@@ -60,4 +65,19 @@ model Photo {
   url           String
   participantId Int
   participant   Participant @relation(fields: [participantId], references: [id], onDelete: Cascade)
+}
+
+// Новая модель для учета голосов
+model Vote {
+  id            Int         @id @default(autoincrement())
+  participantId Int
+  vkId          BigInt
+  name          String
+  decision      String      // "yes" или "no"
+  createdAt     DateTime    @default(now())
+
+  participant   Participant @relation(fields: [participantId], references: [id], onDelete: Cascade)
+
+  // Один администратор может проголосовать за одну заявку только 1 раз
+  @@unique([participantId, vkId]) 
 }

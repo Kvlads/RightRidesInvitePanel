@@ -11,6 +11,8 @@ export interface AdminEventData {
   image?: string;
   isActive: boolean;
   description: string;
+  approvalText?: string;
+  rejectionText?: string;
 }
 
 export const deleteEvent = async (id: number): Promise<boolean> => {

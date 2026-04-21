@@ -8,6 +8,7 @@ import {
 import { Icon16ErrorCircleFill, Icon16Done } from '@vkontakte/icons';
 import { submitRegistration, RegistrationData, uploadPhoto, fetchEventById, EventDetail } from '../../services/api';
 import { useParams, useRouteNavigator } from '@vkontakte/vk-mini-apps-router';
+import bridge from '@vkontakte/vk-bridge';
 
 interface PhotoState {
   id: string;
@@ -143,6 +144,23 @@ export const RegisterPanel: FC<NavIdProps> = ({id}) => {
 
     setIsSubmitting(true);
 
+    // 1. ЗАПРОС РАЗРЕШЕНИЯ НА ОТПРАВКУ СООБЩЕНИЙ
+    try {
+      // Замените на реальный ID группы или используйте переменную окружения
+      const groupId = Number(import.meta.env.VITE_GROUP_ID || 12345678); 
+      if (groupId) {
+        await bridge.send('VKWebAppAllowMessagesFromGroup', {
+          group_id: groupId
+        });
+      }
+    } catch (error) {
+      console.warn('[VKWebAppAllowMessagesFromGroup] error', error);
+      showSnackbar('Необходимо разрешить сообщения от группы для получения статуса заявки', 'error');
+      setIsSubmitting(false);
+      return; // Прерываем отправку!
+    }
+
+    // Подготовка данных
     const payload: RegistrationData = {
       fio: formData.fio,
       city: formData.city,
@@ -150,7 +168,6 @@ export const RegisterPanel: FC<NavIdProps> = ({id}) => {
       brand: formData.brand,
       passengers: formData.passengers,
       type: isParticipant ? 'participant' : 'guest',
-      // Отправляем фото только если юзер регистрируется как участник
       photos: isParticipant ? (photos.map((p) => p.realUrl).filter(Boolean) as string[]) : [],
     };
 
