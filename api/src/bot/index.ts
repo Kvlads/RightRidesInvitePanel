@@ -9,11 +9,15 @@ export const vk = new VK({
   token: process.env.VK_BOT_TOKEN as string
 });
 
+// Получаем порт из .env или используем 465 по умолчанию
+const smtpPort = Number(process.env.SMTP_PORT) || 465;
+
 // Настройка транспортера для отправки почты
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
-  port: Number(process.env.SMTP_PORT) || 465,
-  secure: true, // true для 465 порта
+  port: smtpPort,
+  // Если порт 465 — ставим true. Если 587 или любой другой — ставим false
+  secure: smtpPort === 465, 
   auth: {
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS,

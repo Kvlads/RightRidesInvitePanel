@@ -37,6 +37,7 @@ export interface RegistrationData {
   passengers: string;
   photos?: string[]; // Список URL уже загруженных фото
   type: RequestType;
+  captchaToken?: string;
 }
 
 export interface ApplicationRequest {

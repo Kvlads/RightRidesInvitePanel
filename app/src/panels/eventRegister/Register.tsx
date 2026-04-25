@@ -8,6 +8,8 @@ import {
 import { Icon16ErrorCircleFill, Icon16Done, Icon56UsersOutline } from '@vkontakte/icons';
 import { submitRegistration, RegistrationData, uploadPhoto, fetchEventById, EventDetail } from '../../services/api';
 import { useParams, useRouteNavigator } from '@vkontakte/vk-mini-apps-router';
+// Импортируем компонент Яндекс Капчи
+import { SmartCaptcha } from '@yandex/smart-captcha';
 
 interface PhotoState {
   id: string;
@@ -17,7 +19,7 @@ interface PhotoState {
 }
 
 const initialFormState: RegistrationData = {
-  email: '', // <--- Добавлено поле email
+  email: '',
   city: '',
   fio: '',
   plate: '',
@@ -34,11 +36,13 @@ export const RegisterPanel: FC<NavIdProps> = ({id}) => {
   const [isLoadingEvent, setIsLoadingEvent] = useState(true);
 
   const [isParticipant, setIsParticipant] = useState(true);
-  // Новое состояние: выбрал ли пользователь роль перед заполнением формы?
   const [hasSelectedRole, setHasSelectedRole] = useState(false);
 
   const [formData, setFormData] = useState<RegistrationData>(initialFormState);
   const [photos, setPhotos] = useState<PhotoState[]>([]);
+  
+  // Состояние для токена Яндекс Капчи
+  const [captchaToken, setCaptchaToken] = useState('');
   
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Partial<Record<keyof RegistrationData | 'photos', string>>>({});
@@ -51,7 +55,6 @@ export const RegisterPanel: FC<NavIdProps> = ({id}) => {
         const data = await fetchEventById(parseInt(params.id));
         setEventData(data);
         
-        // Если гости запрещены, жестко ставим "Участник" и пропускаем экран выбора
         if (!data.allowGuests) {
           setIsParticipant(true);
           setHasSelectedRole(true);
@@ -104,19 +107,17 @@ export const RegisterPanel: FC<NavIdProps> = ({id}) => {
 
   const validateForm = (): boolean => {
     const newErrors: Partial<Record<keyof RegistrationData | 'photos', string>> = {};
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/; // Регулярка для проверки email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/; 
 
     if (!formData.fio.trim()) newErrors.fio = 'Обязательное поле';
     if (!formData.city.trim()) newErrors.city = 'Обязательное поле';
     
-    // Валидация Email
     if (!formData.email.trim()) {
       newErrors.email = 'Обязательное поле';
     } else if (!emailRegex.test(formData.email)) {
       newErrors.email = 'Введите корректный email адрес';
     }
     
-    // Автомобильные данные нужны ОБЕИМ ролям
     if (!formData.brand.trim()) newErrors.brand = 'Укажите марку авто';
     if (!formData.plate.trim()) newErrors.plate = 'Укажите госномер';
     if (!formData.passengers.trim()) newErrors.passengers = 'Укажите количество пассажиров (или 0)';
@@ -152,10 +153,16 @@ export const RegisterPanel: FC<NavIdProps> = ({id}) => {
       return;
     }
 
+    // Защита: проверяем наличие токена капчи
+    if (!captchaToken) {
+      showSnackbar('Пожалуйста, пройдите проверку на робота', 'error');
+      return;
+    }
+
     setIsSubmitting(true);
 
     const payload: RegistrationData = {
-      email: formData.email.trim(), // <--- Отправляем email
+      email: formData.email.trim(),
       fio: formData.fio,
       city: formData.city,
       plate: formData.plate,
@@ -163,6 +170,7 @@ export const RegisterPanel: FC<NavIdProps> = ({id}) => {
       passengers: formData.passengers,
       type: isParticipant ? 'participant' : 'guest',
       photos: isParticipant ? (photos.map((p) => p.realUrl).filter(Boolean) as string[]) : [],
+      captchaToken, // <--- Добавляем токен капчи в отправляемые данные
     };
 
     try {
@@ -175,6 +183,8 @@ export const RegisterPanel: FC<NavIdProps> = ({id}) => {
       
     } catch (error: any) {
       showSnackbar(error.message || 'Ошибка отправки заявки', 'error');
+      // Сбрасываем капчу при ошибке сервера (возможно токен протух)
+      setCaptchaToken(''); 
     } finally {
       setIsSubmitting(false);
     }
@@ -201,7 +211,6 @@ export const RegisterPanel: FC<NavIdProps> = ({id}) => {
 
       <Box style={{ maxWidth: 500, margin: '0 auto', padding: '16px 0 32px', width: '100%' }}>
         
-        {/* ЭКРАН 1: Если выбор роли еще не сделан и допускаются гости */}
         {!hasSelectedRole && eventData?.allowGuests ? (
           <Placeholder
             icon={<Icon56UsersOutline />}
@@ -209,16 +218,13 @@ export const RegisterPanel: FC<NavIdProps> = ({id}) => {
             action={
               <div style={{ display: 'flex', gap: 12, flexDirection: 'column', width: 220, margin: '0 auto' }}>
                 <Button 
-                  size="l" 
-                  stretched 
+                  size="l" stretched 
                   onClick={() => { setIsParticipant(true); setHasSelectedRole(true); }}
                 >
                   Я — Участник
                 </Button>
                 <Button 
-                  size="l" 
-                  stretched 
-                  mode="secondary" 
+                  size="l" stretched mode="secondary" 
                   onClick={() => { setIsParticipant(false); setHasSelectedRole(true); }}
                 >
                   Я — Гость
@@ -229,7 +235,6 @@ export const RegisterPanel: FC<NavIdProps> = ({id}) => {
             Пожалуйста, выберите в качестве кого вы планируете посетить мероприятие. От этого зависит процесс регистрации.
           </Placeholder>
         ) : (
-          /* ЭКРАН 2: Сама форма регистрации */
           <>
             {eventData?.allowGuests && (
               <SegmentedControl
@@ -315,10 +320,21 @@ export const RegisterPanel: FC<NavIdProps> = ({id}) => {
               )}
 
               <FormItem>
+                {/* Виджет Яндекс Капчи */}
+                <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'center' }}>
+                  <SmartCaptcha 
+                    sitekey={import.meta.env.VITE_YANDEX_CAPTCHA_SITE_KEY} 
+                    onSuccess={setCaptchaToken}
+                    onTokenExpired={() => setCaptchaToken('')} 
+                  />
+                </div>
+
                 <Button 
                   size="l" stretched mode="primary" 
-                  loading={isSubmitting} onClick={handleSubmit}
-                  style={{ marginBottom: 8, marginTop: 16 }}
+                  loading={isSubmitting} 
+                  onClick={handleSubmit}
+                  disabled={!captchaToken || isSubmitting} // Блокируем, если нет токена капчи
+                  style={{ marginBottom: 8 }}
                 >
                   Отправить заявку
                 </Button>

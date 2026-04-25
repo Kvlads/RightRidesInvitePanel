@@ -1588,6 +1588,11 @@
     "@vkontakte/vkui-date-fns-tz" "^0.0.6"
     "@vkontakte/vkui-floating-ui" "^0.2.7"
 
+"@yandex/smart-captcha@^2.9.1":
+  version "2.9.1"
+  resolved "https://registry.yarnpkg.com/@yandex/smart-captcha/-/smart-captcha-2.9.1.tgz#19bd675888da82cdbb9629bec77ddc3ac6edde74"
+  integrity sha512-0PnrNOxAQqskDhaDI3TL9qk27WGIgJACuKwtWc1u34tkbOJBzoo3cPvzyOLiYIIc8P0FuYP4KosSaf9hH9gXZg==
+
 abort-controller@^3.0.0:
   version "3.0.0"
   resolved "https://registry.yarnpkg.com/abort-controller/-/abort-controller-3.0.0.tgz#eaf54d53b62bae4138e809ca225c8439a6efb392"

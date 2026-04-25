@@ -1,12 +1,11 @@
 import { Router } from 'express';
 import { prisma } from '../prisma/client';
-import { vk, sendApprovalRequestToAdmins } from '../bot'; // <-- Добавили импорт vk
+import { vk, sendApprovalRequestToAdmins } from '../bot';
 
 export const userRouter = Router();
 
 // 1. Получение списка активных мероприятий
 userRouter.get('/events', async (req, res) => {
-  // Вычисляем дату, которая была ровно 2 дня назад от текущего момента
   const twoDaysAgo = new Date();
   twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
 
@@ -14,7 +13,6 @@ userRouter.get('/events', async (req, res) => {
     where: { 
       isActive: true,
       isDeleted: false,
-      // Мероприятие будет отображаться, если его дата больше или равна (gte) "позавчера"
       date: { gte: twoDaysAgo }
     },
     orderBy: { date: 'asc' }
@@ -37,10 +35,27 @@ userRouter.get('/events/:id', async (req, res) => {
 userRouter.post('/events/:id/register', async (req, res) => {
   const eventId = Number(req.params.id);
   
-  // УДАЛЯЕМ: const userId = req.user!.id;
-  // УДАЛЯЕМ: const currentUser = await prisma.user.findUnique(...) 
-  // (Так как мы не знаем VK ID пользователя, бот больше не сможет писать ему в ЛС,
-  // он будет только отправлять заявки в админский чат для голосования).
+  // Извлекаем токен капчи из тела запроса
+  const { captchaToken, photos, photoUrls, ...data } = req.body;
+
+  // ПРОВЕРКА КАПЧИ
+  if (!captchaToken) {
+    return res.status(403).json({ error: 'Пожалуйста, пройдите проверку на робота.' });
+  }
+
+  try {
+    const yandexUrl = `https://smartcaptcha.yandexcloud.net/validate?secret=${process.env.YANDEX_CAPTCHA_SECRET}&token=${captchaToken}&ip=${req.ip}`;
+    
+    const captchaReq = await fetch(yandexUrl);
+    const captchaRes = await captchaReq.json();
+
+    if (captchaRes.status !== 'ok') {
+      return res.status(403).json({ error: 'Проверка на робота не пройдена. Попробуйте обновить страницу.' });
+    }
+  } catch (err) {
+    console.error('Ошибка проверки Yandex Captcha:', err);
+    return res.status(500).json({ error: 'Ошибка сервиса проверки спама. Пожалуйста, попробуйте позже.' });
+  }
 
   const event = await prisma.event.findUnique({
     where: { id: eventId }
@@ -51,23 +66,19 @@ userRouter.post('/events/:id/register', async (req, res) => {
     return res.status(403).json({ error: 'Регистрация закрыта.' });
   }
 
-  const { photos, photoUrls, ...data } = req.body;
   const incomingPhotos = Array.isArray(photos) ? photos : Array.isArray(photoUrls) ? photoUrls : [];
   const photosToCreate = incomingPhotos.map((url: string) => ({ url }));
 
   const registration = await prisma.participant.create({
     data: {
       eventId,
-      // Если Prisma требует userId, можно передать ID "системного" пользователя 
-      // или сделать поле необязательным (рекомендуется)
-      userId: 1, 
+      userId: 1, // Оставляем системного пользователя
       ...data,
       status: event.requireApproval ? 'pending' : 'approved', 
       photos: { create: photosToCreate }
     }
   });
 
-  // Отправляем в чат админов
   if (data.type === 'participant' && event.requireApproval) {
     sendApprovalRequestToAdmins(registration.id).catch(console.error);
   }
@@ -75,25 +86,15 @@ userRouter.post('/events/:id/register', async (req, res) => {
   res.json({ success: true, registration });
 });
 
-// 4. Получение заявок текущего пользователя по ID ивента
+// 4. Получение заявок текущего пользователя
 userRouter.get('/events/:id/my-requests', async (req, res) => {
-  const requests = await prisma.participant.findMany({
-    where: { 
-      eventId: Number(req.params.id),
-      userId: req.user!.id 
-    }
-  });
-  res.json(requests);
+  // Этот роут больше не работает для анонимных пользователей, 
+  // так как нет req.user (авторизация VK отключена)
+  res.status(401).json({ error: 'Авторизация отключена' });
 });
 
 // 5. Детали конкретной заявки
 userRouter.get('/requests/:id', async (req, res) => {
-  const request = await prisma.participant.findFirst({
-    where: { 
-      id: Number(req.params.id),
-      userId: req.user!.id
-    },
-    include: { photos: true }
-  });
-  res.json(request);
+  // Этот роут больше не работает для анонимных пользователей
+  res.status(401).json({ error: 'Авторизация отключена' });
 });
