@@ -1,9 +1,5 @@
 // src/api/client.ts
 
-// 1. Единожды сохраняем параметры запуска VK при загрузке скрипта.
-// Отсекаем знак '?' в начале строки.
-const vkLaunchParams = window.location.search.slice(1);
-
 // Базовый URL до нашего бэкенда. 
 // В Dev-режиме запросы пойдут на прокси Vite, в Prod - на Nginx
 const BASE_URL = '/api'; 
@@ -16,10 +12,17 @@ interface RequestOptions extends RequestInit {
  * Универсальный метод для отправки запросов к нашему API
  */
 export async function apiClient<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {
+  // 1. Берем токен администратора из LocalStorage
+  const adminToken = localStorage.getItem('admin_token');
+
   const headers: Record<string, string> = {
-    'Authorization': `Bearer ${vkLaunchParams}`,
     ...options.headers as Record<string, string>,
   };
+
+  // Подставляем токен, только если он реально существует
+  if (adminToken && adminToken !== 'undefined') {
+    headers['Authorization'] = `Bearer ${adminToken}`;
+  }
 
   let body = options.body;
 
@@ -38,6 +41,17 @@ export async function apiClient<T>(endpoint: string, options: RequestOptions = {
     body: body as BodyInit,
   });
 
+  // 2. Глобальный перехват ошибок авторизации
+  if (response.status === 401 || response.status === 403) {
+    // Очищаем токен, так как сессия истекла или доступ закрыт
+    localStorage.removeItem('admin_token'); 
+    window.location.hash = '#/admin-login'; // Перенаправляем на экран логина
+    
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error || 'Сессия истекла или нет доступа. Пожалуйста, авторизуйтесь.');
+  }
+
+  // 3. Обработка остальных ошибок
   if (!response.ok) {
     // Выкидываем ошибку, чтобы её можно было перехватить через try/catch в компонентах
     const errorData = await response.json().catch(() => ({}));

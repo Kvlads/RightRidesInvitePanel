@@ -7,11 +7,10 @@ import '@vkontakte/vkui/dist/vkui.css';
 import { transformVKBridgeAdaptivity } from './utils';
 import { router } from './routes';
 import { App } from './App';
-import { AuthProvider } from './providers/AuthProvider';
 
 export const AppConfig = () => {
   const vkBridgeAppearance = useAppearance() || undefined;
-  const vkBridgeInsets = useInsets() || undefined;
+  // const vkBridgeInsets = useInsets() || undefined;
   const adaptivity = transformVKBridgeAdaptivity(useAdaptivity());
   const { vk_platform } = parseURLSearchParamsForGetLaunchParams(window.location.search);
 
@@ -23,13 +22,13 @@ export const AppConfig = () => {
       hasCustomPanelHeaderAfter={true}
     >
       <AdaptivityProvider {...adaptivity}>
-        <AuthProvider>
-          <AppRoot mode="full" safeAreaInsets={vkBridgeInsets}>
+        {/* <AuthProvider> */}
+          <AppRoot mode="full">
             <RouterProvider router={router}>
               <App />
             </RouterProvider>
           </AppRoot>
-        </AuthProvider>
+        {/* </AuthProvider> */}
       </AdaptivityProvider>
     </ConfigProvider>
   );

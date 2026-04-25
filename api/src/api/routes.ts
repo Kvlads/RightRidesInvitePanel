@@ -1,5 +1,7 @@
+// api/src/api/routes.ts
 import { Router, Request, Response } from 'express';
-import { vkAuth } from '../middlewares/vkAuth.middleware';
+import crypto from 'crypto';
+import jwt from 'jsonwebtoken';
 import { adminRouter } from './admin.routes';
 import { userRouter } from './user.routes';
 import { upload } from '../middlewares/upload.middleware';
@@ -10,34 +12,54 @@ import sharp from 'sharp';
 export const apiRouter = Router();
 
 apiRouter.get('/', (req: Request, res: Response) => {
-  res.send('Hello World');
+  res.send('API works');
 });
 
-// Применяем middleware ко всем роутам ниже
-apiRouter.use(vkAuth);
-
 apiRouter.post('/init', (req, res) => {
-  const adminIdsString = process.env.ADMIN_ID || '';
-  const adminIds = adminIdsString.split(',').map(id => id.trim());
-  const currentVkId = req.user!.vkId.toString();
-  
-  const isAdmin = adminIds.includes(currentVkId);
-
   res.json({ 
-    message: 'Успешная авторизация', 
-    user: req.user,
-    isAdmin 
+    message: 'Успешная инициализация', 
+    isAdmin: !!req.headers.authorization?.includes('Bearer') // Простейшая проверка на наличие токена
   });
 });
 
-// Администрирование
+// Эндпоинт для входа администратора
+apiRouter.post('/auth/login', (req, res) => {
+  const { login, password } = req.body;
+
+  // Берем данные из .env
+  const envLogin = process.env.APP_LOGIN;
+  const envPasswordHash = process.env.APP_PASSWORD;
+
+  if (!login || !password) {
+    return res.status(400).json({ error: 'Введите логин и пароль' });
+  }
+
+  // Хешируем введенный пароль в MD5
+  const hashedPassword = crypto.createHash('md5').update(password).digest('hex');
+
+  // Сравниваем
+  if (login === envLogin && hashedPassword === envPasswordHash) {
+    // Пароль верный! Генерируем токен на 24 часа
+    const token = jwt.sign(
+      { role: 'admin' }, 
+      process.env.JWT_SECRET || 'fallback_secret_key_123', 
+      { expiresIn: '24h' }
+    );
+    
+    return res.json({ success: true, token });
+  }
+
+  return res.status(401).json({ error: 'Неверный логин или пароль' });
+});
+
+// Администрирование (теперь защищено нашим middleware!)
 apiRouter.use('/admin', adminRouter);
 
-// Пользовательская часть
+// Пользовательская часть (остается открытой или со своей логикой)
 apiRouter.use('/user', userRouter);
 
-apiRouter.post('/upload', vkAuth, upload.single('file'), async (req, res) => {
-  // Создаем папку для загрузок, если её нет
+apiRouter.post('/upload', upload.single('file'), async (req, res) => {
+  // ... ваш существующий код загрузки файлов ...
   const uploadDir = 'uploads';
   if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir);
@@ -48,24 +70,15 @@ apiRouter.post('/upload', vkAuth, upload.single('file'), async (req, res) => {
   }
 
   try {
-    // Генерируем имя файла. Сохранять будем в .webp для максимального сжатия
     const filename = `${Date.now()}-${Math.round(Math.random() * 1e9)}.webp`;
     const filepath = path.join(uploadDir, filename);
 
-    // Магия Sharp: берем файл из памяти, меняем размер, сжимаем и сохраняем
     await sharp(req.file.buffer)
-      .resize({
-        width: 1080,
-        height: 1080,
-        fit: 'inside', // Сохраняет пропорции, фото впишется в квадрат 1080x1080
-        withoutEnlargement: true // Если картинка меньше 1080, она не будет растягиваться
-      })
-      .webp({ quality: 80 }) // 80% качество WebP дает отличное изображение при смешном весе
+      .resize({ width: 1080, height: 1080, fit: 'inside', withoutEnlargement: true })
+      .webp({ quality: 80 })
       .toFile(filepath);
 
-    // Возвращаем публичный URL для фронтенда
     res.json({ url: `/uploads/${filename}` });
-    
   } catch (error) {
     console.error('Ошибка обработки изображения:', error);
     res.status(500).json({ error: 'Произошла ошибка при сохранении фото' });

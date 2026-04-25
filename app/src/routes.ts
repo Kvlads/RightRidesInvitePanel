@@ -12,7 +12,6 @@ export const DEFAULT_VIEW = 'default_view';
 
 export const DEFAULT_VIEW_PANELS = {
   HOME: 'home',
-  PERSIK: 'persik',
 
   EVENT: 'event',
   EVENT_REGISTER: 'event-register',
@@ -23,14 +22,13 @@ export const DEFAULT_VIEW_PANELS = {
 
   ADMIN_EVENT_LIST: 'admin-event-list',
   ADMIN_EVENT_EDIT: 'admin-event-edit',
+  ADMIN_LOGIN: 'admin-login',
 } as const;
 
 export const routes = RoutesConfig.create([
   createRoot(DEFAULT_ROOT, [
     createView(DEFAULT_VIEW, [
       createPanel(DEFAULT_VIEW_PANELS.HOME, '/', []),
-
-      createPanel(DEFAULT_VIEW_PANELS.PERSIK, `/${DEFAULT_VIEW_PANELS.PERSIK}`, []),
 
       createPanel(DEFAULT_VIEW_PANELS.EVENT, `/event/:id`, []),
       createPanel(DEFAULT_VIEW_PANELS.EVENT_REGISTER, `/event/:id/register`, []),
@@ -40,6 +38,7 @@ export const routes = RoutesConfig.create([
       createPanel(DEFAULT_VIEW_PANELS.EVENT_USER_REQUEST_ITEM, `/event/:id/requests/:requestId`, []),
 
       createPanel(DEFAULT_VIEW_PANELS.ADMIN_EVENT_LIST, `/admin`, []),
+      createPanel(DEFAULT_VIEW_PANELS.ADMIN_LOGIN, `/admin-login`, []),
       createPanel(DEFAULT_VIEW_PANELS.ADMIN_EVENT_EDIT, `/admin/event`, []),
       createPanel(DEFAULT_VIEW_PANELS.ADMIN_EVENT_EDIT, `/admin/event/:id`, []),
     ]),
