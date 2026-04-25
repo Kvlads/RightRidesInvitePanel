@@ -46,7 +46,7 @@ export const EventUserRequestsPanel: FC<NavIdProps> = ({id}) => {
         Мои заявки
       </PanelHeader>
 
-      <Box style={{ maxWidth: 500, width: '100%', margin: '10px auto 0', padding: '0 15px' }}>
+      <Box style={{ maxWidth: 500, width: '100%', margin: '10px auto 0' }}>
         {loading ? (
           <CardGrid size="l">
             {Array.from({ length: 3 }).map((_, i) => (

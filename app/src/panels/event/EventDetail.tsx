@@ -46,7 +46,7 @@ const EventDetailPanel: FC<NavIdProps> = ({ id }) => {
         {event?.title}
       </PanelHeader>
 
-      <Box style={{ maxWidth: 500, width: '100%', margin: '0 auto 0', padding: '0 15px' }}>
+      <Box style={{ maxWidth: 500, width: '100%', margin: '0 auto 0' }}>
         {loading ? (
           <Skeleton style={{ height: 500, width: '100%', marginBottom: 16 }} />
         ) : (

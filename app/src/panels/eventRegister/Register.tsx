@@ -199,7 +199,7 @@ export const RegisterPanel: FC<NavIdProps> = ({id}) => {
         Регистрация
       </PanelHeader>
 
-      <Box style={{ maxWidth: 500, margin: '0 auto', padding: '16px 15px 32px', width: '100%' }}>
+      <Box style={{ maxWidth: 500, margin: '0 auto', padding: '16px 0 32px', width: '100%' }}>
         
         {/* ЭКРАН 1: Если выбор роли еще не сделан и допускаются гости */}
         {!hasSelectedRole && eventData?.allowGuests ? (

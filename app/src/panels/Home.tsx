@@ -49,7 +49,7 @@ export const Home: FC<HomeProps> = () => {
         RightRides. [less clearance - more respect]
       </PanelHeader>
 
-      <Box style={{ maxWidth: 400, margin: '15px auto 0', padding: '0 15px' }}>
+      <Box style={{ maxWidth: 400, margin: '15px auto 0' }}>
         <Header size='s'>Наши мероприятия</Header>
         
         {loading ? (

@@ -8,7 +8,7 @@ export const SuccessPanel: FC<NavIdProps> = ({id}) => {
 
   return (
     <Panel id={id}>
-      <Box style={{ maxWidth: 500, margin: '0 auto 0', padding: '0 15px', height: '100vh', display: 'flex', flexDirection: 'column' }}>
+      <Box style={{ maxWidth: 500, margin: '0 auto 0', height: '100vh', display: 'flex', flexDirection: 'column' }}>
         <Placeholder
           style={{ flexGrow: 1 }}
           icon={

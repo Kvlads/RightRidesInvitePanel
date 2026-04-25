@@ -64,12 +64,12 @@ export const AdminEventsPanel: FC<NavIdProps> = ({id}) => {
         Администрирование
       </PanelHeader>
 
-      <Box style={{ maxWidth: 400, width: '100%', margin: '15px auto 0', padding: '0 15px' }}>
+      <Box style={{ maxWidth: 400, width: '100%', margin: '15px auto' }}>
         <Button 
           size="l" 
-          stretched 
+          // stretched 
           mode="primary" 
-          style={{ margin: '10px 0',  }}
+          style={{ margin: '10px 15px' }}
           onClick={() => routeNavigator.push('/admin/event')}
         >
           Создать новое мероприятие
@@ -83,7 +83,7 @@ export const AdminEventsPanel: FC<NavIdProps> = ({id}) => {
           ))
         ) : events.length > 0 ? (
           events.map((event) => (
-            <div key={event.id} style={{ position: 'relative', marginBottom: 10 }}>
+            <div key={event.id} style={{ position: 'relative', margin: '0 15px 10px' }}>
               <Button 
                 size="l" 
                 stretched 
@@ -106,7 +106,7 @@ export const AdminEventsPanel: FC<NavIdProps> = ({id}) => {
                   backgroundColor: 'var(--vkui--color_background_negative)',
                   color: 'white',
                   borderRadius: '50%',
-                  transform: 'scale(60%)',
+                  transform: 'scale(50%)',
                   zIndex: 2
                 }}
               >

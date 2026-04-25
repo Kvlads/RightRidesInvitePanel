@@ -29,7 +29,7 @@ export const RequestDetailPanel: FC<NavIdProps> = ({id}) => {
         Просмотр заявки
       </PanelHeader>
 
-      <Box style={{ maxWidth: 500, margin: '0 auto 0', padding: '0 15px', width: '100%' }}>
+      <Box style={{ maxWidth: 500, margin: '0 auto 0', width: '100%' }}>
         {loading || !requestData ? (
           <Group>
             {Array.from({ length: 5 }).map((_, i) => (
@@ -73,7 +73,7 @@ export const RequestDetailPanel: FC<NavIdProps> = ({id}) => {
             {requestData.photos.length > 0 && (
               <>
                 <Header>Фотографии авто</Header>
-                <Box style={{ display: 'flex', gap: 8, flexWrap: 'wrap', padding: '0 15px' }}>
+                <Box style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                   {requestData.photos.map((photo, index) => (
                     <div 
                       key={index} 
