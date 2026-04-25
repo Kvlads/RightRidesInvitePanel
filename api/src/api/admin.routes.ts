@@ -63,19 +63,20 @@ adminRouter.post('/events/:id/participants', async (req, res) => {
     where: { 
       eventId: Number(req.params.id),
       type,
-      status: type === 'participant' && 'approved' || 'pending',
+      status: type === 'participant' ? 'approved' : 'pending',
     },
     include: { user: true }
   });
   
   res.json(participants.map(p => ({
-    // Если пользователь заполнил ФИО в форме, отдаем его, если нет - имя из профиля ВК
-    name: p.fio || p.user.name,
-    vkId: p.user.vkId.toString(),
+    // Используем опциональную цепочку (?.) на случай, если p.user === null
+    name: p.fio || p.user?.name || 'Не указано',
+    vkId: p.user?.vkId?.toString() || 'Нет VK ID',
+    email: p.email || 'Не указан', // Добавили email в выгрузку
     city: p.city || 'Не указан',
     brand: p.brand || 'Не указана',
     plate: p.plate || 'Не указан',
-    passengers: p.passengers || '0', // Используем новое поле passengers вместо guestsCount
+    passengers: p.passengers || '0', 
     status: p.status,
     date: p.createdAt
   })));

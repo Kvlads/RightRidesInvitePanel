@@ -5,7 +5,6 @@ import {
 } from '@vkontakte/vkui';
 import { Icon16ErrorCircleFill } from '@vkontakte/icons';
 import { useRouteNavigator } from '@vkontakte/vk-mini-apps-router';
-import { apiClient } from '../../api/client';
 
 export const AdminLogin: FC<NavIdProps> = ({ id }) => {
   const routeNavigator = useRouteNavigator();
