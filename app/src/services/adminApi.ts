@@ -47,7 +47,7 @@ export const exportParticipants = async (id: number, type: 'guest' | 'participan
   });
   
   // Расширили заголовки для CSV
-  const headers = ['Имя/ФИО', 'VK ID', 'Город', 'Автомобиль', 'Госномер', 'Пассажиров', 'Статус', 'Дата регистрации'];
+  const headers = ['Имя/ФИО', 'Город', 'Автомобиль', 'Госномер', 'Пассажиров', 'Статус', 'Дата регистрации'];
   
   const csvContent = [
     headers.join(','),
@@ -55,7 +55,6 @@ export const exportParticipants = async (id: number, type: 'guest' | 'participan
       // Оборачиваем значения в кавычки, чтобы запятые внутри текста (если они есть) не сломали CSV
       const row = [
         p.name, 
-        p.vkId, 
         p.city, 
         p.brand, 
         p.plate, 
