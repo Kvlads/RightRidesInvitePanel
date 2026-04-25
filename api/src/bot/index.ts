@@ -169,7 +169,7 @@ vk.updates.on('message_event', async (context) => {
           const fallbackApproved = `🎉 Ваша заявка принята!`;
           const fallbackRejected = `😔 К сожалению, ваша заявка была отклонена.`;
           
-          const emailText = finalStatus === 'approved' 
+          const emailStatusText = finalStatus === 'approved' 
             ? (reg.event.approvalText || fallbackApproved)
             : (reg.event.rejectionText || fallbackRejected);
 
@@ -178,14 +178,13 @@ vk.updates.on('message_event', async (context) => {
             ? reg.event.image 
             : `${baseUrl}${reg.event.image}`;
 
-          // 1. Полноценный HTML-каркас
+          // 1. Полноценный HTML-каркас с данными об авто
           const htmlBody = `
             <!DOCTYPE html>
             <html lang="ru">
             <head>
               <meta charset="UTF-8">
               <meta name="viewport" content="width=device-width, initial-scale=1.0">
-              <title>Статус заявки</title>
             </head>
             <body style="margin: 0; padding: 20px; background-color: #f9f9f9;">
               <table width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; border: 1px solid #eaeaea;">
@@ -201,10 +200,16 @@ vk.updates.on('message_event', async (context) => {
                       />
                     ` : ''}
                     
-                    <p style="font-size: 16px; line-height: 1.6; margin: 0;">
+                    <p style="font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
                       Здравствуйте, ${reg.fio}!<br><br>
-                      ${emailText}
+                      ${emailStatusText}
                     </p>
+
+                    <div style="background-color: #f5f5f5; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                      <h3 style="margin-top: 0; font-size: 14px; color: #666; text-transform: uppercase;">Данные автомобиля:</h3>
+                      <p style="margin: 5px 0; font-size: 16px;"><strong>Марка:</strong> ${reg.brand}</p>
+                      <p style="margin: 5px 0; font-size: 16px;"><strong>Госномер:</strong> ${reg.plate}</p>
+                    </div>
 
                     <hr style="border: none; border-top: 1px solid #eeeeee; margin: 30px 0 20px;" />
                     <p style="font-size: 12px; color: #999999; margin: 0; text-align: center;">
@@ -218,13 +223,16 @@ vk.updates.on('message_event', async (context) => {
             </html>
           `;
 
-          // 2. Обычный текст для почтовиков, которые не поддерживают HTML
-          // (или для спам-фильтров, которые сравнивают текст с HTML)
+          // 2. Текстовая версия
           const plainTextBody = `
 Здравствуйте, ${reg.fio}!
 
 Статус вашей заявки на мероприятие «${reg.event.title}»:
-${emailText}
+${emailStatusText}
+
+Данные автомобиля в заявке:
+Марка: ${reg.brand}
+Госномер: ${reg.plate}
 
 ---
 Это автоматическое сообщение. Пожалуйста, не отвечайте на него.
@@ -235,7 +243,7 @@ ${emailText}
             from: `"RightRides" <${process.env.SMTP_USER}>`,
             to: reg.email,
             subject: `Заявка: ${reg.event.title}`,
-            text: plainTextBody, // <--- КРИТИЧЕСКИ ВАЖНО ДЛЯ СПАМ-ФИЛЬТРОВ
+            text: plainTextBody,
             html: htmlBody,
           }).catch(err => console.error('Ошибка отправки email:', err));
         }

@@ -74,6 +74,7 @@ apiRouter.post('/upload', upload.single('file'), async (req, res) => {
     const filepath = path.join(uploadDir, filename);
 
     await sharp(req.file.buffer)
+      .rotate()
       .resize({ width: 1080, height: 1080, fit: 'inside', withoutEnlargement: true })
       .webp({ quality: 80 })
       .toFile(filepath);
