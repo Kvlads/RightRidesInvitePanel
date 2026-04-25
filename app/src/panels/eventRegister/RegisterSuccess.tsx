@@ -22,7 +22,7 @@ export const SuccessPanel: FC<NavIdProps> = ({id}) => {
               <Icon56CheckCircleOutline fill="currentColor" width={56} height={56} />
             </div>
           }
-          title="Успешная регистрация на мероприятие."
+          title="Успешная регистрация на мероприятие. Решение по вашей заявке будет отправлено вам на почту!"
           action={
             <Button size="m" mode="primary" onClick={() => routeNavigator.push('/')}>
               Вернуться на главную

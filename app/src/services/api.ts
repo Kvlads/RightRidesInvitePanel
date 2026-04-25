@@ -29,6 +29,7 @@ export interface UserStatus {
 }
 
 export interface RegistrationData {
+  email: string;
   city: string;
   fio: string;
   plate: string;
@@ -172,5 +173,6 @@ export const fetchRequestDetail = async (id: number): Promise<RequestDetail> => 
     status: r.status as RequestStatus,
     photos: r.photos?.map((p: any) => p.url) || [],
     type: r.type,
+    email: r.email,
   };
 };

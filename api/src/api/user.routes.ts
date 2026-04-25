@@ -36,66 +36,40 @@ userRouter.get('/events/:id', async (req, res) => {
 // 3. Регистрация на мероприятие (создание новой заявки)
 userRouter.post('/events/:id/register', async (req, res) => {
   const eventId = Number(req.params.id);
-  const userId = req.user!.id;
   
-  // ЗАЩИТА: Проверяем, не истекла ли дата регистрации
+  // УДАЛЯЕМ: const userId = req.user!.id;
+  // УДАЛЯЕМ: const currentUser = await prisma.user.findUnique(...) 
+  // (Так как мы не знаем VK ID пользователя, бот больше не сможет писать ему в ЛС,
+  // он будет только отправлять заявки в админский чат для голосования).
+
   const event = await prisma.event.findUnique({
     where: { id: eventId }
   });
 
-  if (!event) {
-    return res.status(404).json({ error: 'Мероприятие не найдено' });
-  }
-
-  // Если текущее время больше, чем время закрытия регистрации
+  if (!event) return res.status(404).json({ error: 'Мероприятие не найдено' });
   if (new Date() > new Date(event.regEndDate)) {
-    return res.status(403).json({ error: 'Регистрация на данное мероприятие уже закрыта.' });
+    return res.status(403).json({ error: 'Регистрация закрыта.' });
   }
 
-  // Достаем пользователя, чтобы получить его vkId для отправки сообщения
-  const currentUser = await prisma.user.findUnique({
-    where: { id: userId }
-  });
-  
   const { photos, photoUrls, ...data } = req.body;
   const incomingPhotos = Array.isArray(photos) ? photos : Array.isArray(photoUrls) ? photoUrls : [];
-
   const photosToCreate = incomingPhotos.map((url: string) => ({ url }));
 
   const registration = await prisma.participant.create({
     data: {
       eventId,
-      userId,
+      // Если Prisma требует userId, можно передать ID "системного" пользователя 
+      // или сделать поле необязательным (рекомендуется)
+      userId: 1, 
       ...data,
-      // Если мероприятие требует подтверждения - ставим pending, если нет - сразу approved
       status: event.requireApproval ? 'pending' : 'approved', 
-      photos: {
-        create: photosToCreate
-      }
+      photos: { create: photosToCreate }
     }
   });
 
-  // ЗАПУСК ЛОГИКИ БОТА
-  if (event.requireApproval) {
-    // Если требуется подтверждение и это УЧАСТНИК, отправляем на голосование админам
-    if (data.type === 'participant') {
-      sendApprovalRequestToAdmins(registration.id).catch(err => 
-        console.error('Ошибка отправки в чат админов:', err)
-      );
-    }
-  } else if (data.type === 'participant') {
-    // Если подтверждение НЕ требуется, заявка принимается автоматически.
-    // Сразу отправляем пользователю approvalText (или стандартный текст, если его нет)
-    if (currentUser && currentUser.vkId) {
-      const fallbackApproved = `🎉 Ваша заявка на мероприятие «${event.title}» принята!`;
-      const messageText = event.approvalText || fallbackApproved;
-
-      vk.api.messages.send({
-        user_id: Number(currentUser.vkId),
-        message: messageText,
-        random_id: Math.floor(Math.random() * 1e15)
-      }).catch(err => console.error('Ошибка автоматической отправки ЛС пользователю:', err));
-    }
+  // Отправляем в чат админов
+  if (data.type === 'participant' && event.requireApproval) {
+    sendApprovalRequestToAdmins(registration.id).catch(console.error);
   }
 
   res.json({ success: true, registration });

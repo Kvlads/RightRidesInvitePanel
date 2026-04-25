@@ -4,10 +4,9 @@ import {
   Title, Text, Skeleton, Button, 
   NavIdProps,
   Box,
-  Counter
 } from '@vkontakte/vkui';
 import { useParams, useRouteNavigator } from '@vkontakte/vk-mini-apps-router';
-import { EventDetail, fetchEventById, fetchUserStatus, UserStatus } from '../../services/api';
+import { EventDetail, fetchEventById } from '../../services/api';
 
 // Вспомогательная функция для проверки открытой регистрации
 const checkIsRegistrationOpen = (regEndStr?: string) => {
@@ -28,11 +27,6 @@ const EventDetailPanel: FC<NavIdProps> = ({ id }) => {
   const routeNavigator = useRouteNavigator();
   const [event, setEvent] = useState<EventDetail | null>(null);
   const [loading, setLoading] = useState(true);
-  const [userStatus, setUserStatus] = useState<UserStatus | null>(null);
-
-  useEffect(() => {
-    fetchUserStatus().then(setUserStatus);
-  }, []);
 
   useEffect(() => {
     if (params?.id) {
@@ -93,7 +87,7 @@ const EventDetailPanel: FC<NavIdProps> = ({ id }) => {
               </Button>
             )}
 
-            <Button 
+            {/* <Button 
               size="l"
               stretched
               mode="secondary"
@@ -105,7 +99,7 @@ const EventDetailPanel: FC<NavIdProps> = ({ id }) => {
               }
             >
               Мои заявки
-            </Button>
+            </Button> */}
           </Group>
         )}
       </Box>

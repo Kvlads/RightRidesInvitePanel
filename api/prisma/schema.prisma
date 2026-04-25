@@ -40,8 +40,9 @@ model Event {
 model Participant {
   id          Int      @id @default(autoincrement())
   eventId     Int
-  userId      Int
+  userId      Int?
   // Поля формы регистрации
+  email       String?
   city        String?
   fio         String?
   plate       String?
@@ -54,7 +55,7 @@ model Participant {
   createdAt   DateTime @default(now())
 
   event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user  User?  @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   vkAttachments String?  @db.Text // Хранит строку "photo123_456,photo123_457"
   votes         Vote[]
