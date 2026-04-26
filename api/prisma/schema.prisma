@@ -48,6 +48,7 @@ model Participant {
   plate       String?
   brand       String?
   passengers  String?
+  comment     String?  @db.Text
   type        String   @default("participant") // "participant" или "guest"
   
   status      String   @default("pending") // "pending", "approved", "rejected"

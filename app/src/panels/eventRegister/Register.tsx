@@ -3,7 +3,7 @@ import {
   Panel, PanelHeader, PanelHeaderBack, FormItem, 
   Input, File, Button, Box, Spinner,
   NavIdProps, Group, SegmentedControl, Snackbar,
-  PanelSpinner, Placeholder
+  PanelSpinner, Placeholder, Textarea, Checkbox
 } from '@vkontakte/vkui';
 import { Icon16ErrorCircleFill, Icon16Done, Icon56UsersOutline } from '@vkontakte/icons';
 import { submitRegistration, RegistrationData, uploadPhoto, fetchEventById, EventDetail } from '../../services/api';
@@ -25,6 +25,7 @@ const initialFormState: RegistrationData = {
   plate: '',
   brand: '',
   passengers: '',
+  comment: '', // Поле для комментария
   type: 'participant',
 };
 
@@ -37,6 +38,9 @@ export const RegisterPanel: FC<NavIdProps> = ({id}) => {
 
   const [isParticipant, setIsParticipant] = useState(true);
   const [hasSelectedRole, setHasSelectedRole] = useState(false);
+
+  // Состояние для галочки обработки ПД
+  const [isAgreed, setIsAgreed] = useState(false);
 
   const [formData, setFormData] = useState<RegistrationData>(initialFormState);
   const [photos, setPhotos] = useState<PhotoState[]>([]);
@@ -68,7 +72,7 @@ export const RegisterPanel: FC<NavIdProps> = ({id}) => {
     loadEvent();
   }, [params?.id]);
 
-  const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.currentTarget;
     setFormData((prev) => ({ ...prev, [name]: value }));
     if (errors[name as keyof RegistrationData]) {
@@ -123,6 +127,10 @@ export const RegisterPanel: FC<NavIdProps> = ({id}) => {
     if (!formData.passengers.trim()) newErrors.passengers = 'Укажите количество пассажиров (или 0)';
     
     if (isParticipant) {
+      if (!formData.comment?.trim() || formData.comment.trim().length < 10) {
+        newErrors.comment = 'Комментарий должен содержать минимум 10 символов';
+      }
+
       if (photos.length === 0) {
         newErrors.photos = 'Необходимо добавить хотя бы 1 фото автомобиля';
       } else if (photos.some((p) => p.isLoading)) {
@@ -153,7 +161,6 @@ export const RegisterPanel: FC<NavIdProps> = ({id}) => {
       return;
     }
 
-    // Защита: проверяем наличие токена капчи
     if (!captchaToken) {
       showSnackbar('Пожалуйста, пройдите проверку на робота', 'error');
       return;
@@ -168,9 +175,10 @@ export const RegisterPanel: FC<NavIdProps> = ({id}) => {
       plate: formData.plate,
       brand: formData.brand,
       passengers: formData.passengers,
+      comment: isParticipant ? formData.comment?.trim() : '', 
       type: isParticipant ? 'participant' : 'guest',
       photos: isParticipant ? (photos.map((p) => p.realUrl).filter(Boolean) as string[]) : [],
-      captchaToken, // <--- Добавляем токен капчи в отправляемые данные
+      captchaToken, 
     };
 
     try {
@@ -183,7 +191,6 @@ export const RegisterPanel: FC<NavIdProps> = ({id}) => {
       
     } catch (error: any) {
       showSnackbar(error.message || 'Ошибка отправки заявки', 'error');
-      // Сбрасываем капчу при ошибке сервера (возможно токен протух)
       setCaptchaToken(''); 
     } finally {
       setIsSubmitting(false);
@@ -280,46 +287,70 @@ export const RegisterPanel: FC<NavIdProps> = ({id}) => {
               </FormItem>
 
               {isParticipant && (
-                <FormItem 
-                  top="Фотографии авто (от 1 до 5)" 
-                  status={errors.photos ? 'error' : 'default'} 
-                  bottom={errors.photos}
-                >
-                  {photos.length < 5 && (
-                    <File multiple accept="image/*" mode="secondary" onChange={handlePhotoUpload}>
-                      Выбрать фото
-                    </File>
-                  )}
-                  
-                  {photos.length > 0 && (
-                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 12 }}>
-                      {photos.map((photo) => (
-                        <div 
-                          key={photo.id} 
-                          style={{ 
-                            position: 'relative', width: 80, height: 80, 
-                            borderRadius: 8, overflow: 'hidden',
-                            backgroundColor: 'var(--vkui--color_background_secondary)'
-                          }}
-                        >
-                          <img src={photo.previewUrl} alt="preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                          {photo.isLoading && (
-                            <div style={{ 
-                              position: 'absolute', inset: 0, display: 'flex', 
-                              alignItems: 'center', justifyContent: 'center', 
-                              backgroundColor: 'rgba(0,0,0,0.5)' 
-                            }}>
-                              <Spinner size="s" />
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </FormItem>
+                <>
+                  <FormItem 
+                    top="Комментарий к заявке" 
+                    status={errors.comment ? 'error' : 'default'} 
+                    bottom={errors.comment || 'Опишите ваш автомобиль: спек-лист, историю постройки или особенности (минимум 10 символов)'}
+                  >
+                    <Textarea 
+                      name="comment" 
+                      value={formData.comment} 
+                      onChange={handleInputChange} 
+                      placeholder="Введите комментарий..." 
+                    />
+                  </FormItem>
+
+                  <FormItem 
+                    top="Фотографии авто (от 1 до 5)" 
+                    status={errors.photos ? 'error' : 'default'} 
+                    bottom={errors.photos}
+                  >
+                    {photos.length < 5 && (
+                      <File multiple accept="image/*" mode="secondary" onChange={handlePhotoUpload}>
+                        Выбрать фото
+                      </File>
+                    )}
+                    
+                    {photos.length > 0 && (
+                      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 12 }}>
+                        {photos.map((photo) => (
+                          <div 
+                            key={photo.id} 
+                            style={{ 
+                              position: 'relative', width: 80, height: 80, 
+                              borderRadius: 8, overflow: 'hidden',
+                              backgroundColor: 'var(--vkui--color_background_secondary)'
+                            }}
+                          >
+                            <img src={photo.previewUrl} alt="preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            {photo.isLoading && (
+                              <div style={{ 
+                                position: 'absolute', inset: 0, display: 'flex', 
+                                alignItems: 'center', justifyContent: 'center', 
+                                backgroundColor: 'rgba(0,0,0,0.5)' 
+                              }}>
+                                <Spinner size="s" />
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </FormItem>
+                </>
               )}
 
               <FormItem>
+                {/* Галочка согласия на обработку ПД */}
+                <Checkbox 
+                  checked={isAgreed} 
+                  onChange={(e) => setIsAgreed(e.target.checked)}
+                  style={{ marginBottom: 16 }}
+                >
+                  Я согласен на обработку персональных данных
+                </Checkbox>
+
                 {/* Виджет Яндекс Капчи */}
                 <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'center' }}>
                   <SmartCaptcha 
@@ -333,7 +364,7 @@ export const RegisterPanel: FC<NavIdProps> = ({id}) => {
                   size="l" stretched mode="primary" 
                   loading={isSubmitting} 
                   onClick={handleSubmit}
-                  disabled={!captchaToken || isSubmitting} // Блокируем, если нет токена капчи
+                  disabled={!captchaToken || isSubmitting || !isAgreed} // Блокируем, если не нажата галочка или нет капчи
                   style={{ marginBottom: 8 }}
                 >
                   Отправить заявку

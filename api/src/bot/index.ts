@@ -69,7 +69,8 @@ export const sendApprovalRequestToAdmins = async (registrationId: number) => {
     `👤 Участник: ${reg.fio}\n` +
     `📧 Email: ${reg.email || 'Не указан'}\n` +
     `🚘 Марка: ${reg.brand}\n` +
-    `🔢 Госномер: ${reg.plate}\n\n` +
+    `🔢 Госномер: ${reg.plate}\n` +
+    `💬 Комментарий: ${reg.comment || 'Нет комментариев'}\n\n` + // <--- Добавили
     `Голоса ЗА:\n` +
     `Голоса ПРОТИВ:\n`;
 
@@ -149,7 +150,9 @@ vk.updates.on('message_event', async (context) => {
     let newText = `🚗 Заявка на «${reg.event.title}»\n\n` +
       `👤 Участник: ${reg.fio}\n` +
       `📧 Email: ${reg.email || 'Не указан'}\n` +
-      `🚘 Марка: ${reg.brand}\n🔢 Госномер: ${reg.plate}\n\n` +
+      `🚘 Марка: ${reg.brand}\n` +
+      `🔢 Госномер: ${reg.plate}\n` +
+      `💬 Комментарий: ${reg.comment || 'Нет комментариев'}\n\n` + // <--- Добавили
       `✅ Голоса ЗА (${yesVotes.length}):\n${yesVotes.map(v => `- ${v.name}`).join('\n')}\n\n` +
       `❌ Голоса ПРОТИВ (${noVotes.length}):\n${noVotes.map(v => `- ${v.name}`).join('\n')}\n`;
 
