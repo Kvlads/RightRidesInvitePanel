@@ -191,7 +191,7 @@ export const RegisterPanel: FC<NavIdProps> = ({id}) => {
       
     } catch (error: any) {
       showSnackbar(error.message || 'Ошибка отправки заявки', 'error');
-      setCaptchaToken(''); 
+      setIsSubmitting(false);
     } finally {
       setIsSubmitting(false);
     }

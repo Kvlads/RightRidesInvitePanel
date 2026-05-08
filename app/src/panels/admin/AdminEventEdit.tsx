@@ -26,7 +26,7 @@ export const AdminEventEdit: FC<NavIdProps> = ({id}) => {
     allowGuests: false,
     requireApproval: false,
     isActive: true,
-    // Добавлены новые поля со значениями по умолчанию
+    registerOpen: true,
     approvalText: '',
     rejectionText: '',
   });
@@ -142,6 +142,13 @@ export const AdminEventEdit: FC<NavIdProps> = ({id}) => {
                 onChange={handleInputChange}
               >
                 Мероприятие активно
+              </Checkbox>
+              <Checkbox
+                name="registerOpen"
+                checked={formData.registerOpen}
+                onChange={handleInputChange}
+              >
+                Регистрация открыта
               </Checkbox>
             </FormItem>
 
@@ -284,7 +291,7 @@ export const AdminEventEdit: FC<NavIdProps> = ({id}) => {
                 Экспорт гостей
               </Button>
 
-              <div style={{ height: 20 }} />
+              {/* <div style={{ height: 20 }} />
 
               <FormItem top="Сообщение участникам" style={{ padding: 0 }}>
                 <Textarea
@@ -304,7 +311,7 @@ export const AdminEventEdit: FC<NavIdProps> = ({id}) => {
                 style={{ marginTop: 12 }}
               >
                 Отправить сообщение участникам
-              </Button>
+              </Button> */}
             </Box>
           </Group>
         )}

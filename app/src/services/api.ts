@@ -22,6 +22,7 @@ export interface EventDetail {
   description: string;
   location: string;
   allowGuests: boolean;
+  registerOpen: boolean;
 }
 
 export interface UserStatus {
@@ -97,7 +98,8 @@ export const fetchEventById = async (id: number): Promise<EventDetail> => {
     regEnd: formatDate(e.regEndDate),
     description: e.description || '',
     location: e.location || '',
-    allowGuests: e.allowGuests
+    allowGuests: e.allowGuests,
+    registerOpen: e.registerOpen,
   };
 };
 

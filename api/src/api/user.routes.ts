@@ -62,7 +62,7 @@ userRouter.post('/events/:id/register', async (req, res) => {
   });
 
   if (!event) return res.status(404).json({ error: 'Мероприятие не найдено' });
-  if (new Date() > new Date(event.regEndDate)) {
+  if (new Date() > new Date(event.regEndDate) || !event.registerOpen) {
     return res.status(403).json({ error: 'Регистрация закрыта.' });
   }
 

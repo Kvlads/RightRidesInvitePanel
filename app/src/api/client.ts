@@ -42,7 +42,7 @@ export async function apiClient<T>(endpoint: string, options: RequestOptions = {
   });
 
   // 2. Глобальный перехват ошибок авторизации
-  if (response.status === 401 || response.status === 403) {
+  if ((response.status === 401 || response.status === 403) && /^admin$/i.test(endpoint)) {
     // Очищаем токен, так как сессия истекла или доступ закрыт
     localStorage.removeItem('admin_token'); 
     window.location.hash = '#/admin-login'; // Перенаправляем на экран логина

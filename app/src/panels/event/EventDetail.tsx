@@ -61,21 +61,23 @@ const EventDetailPanel: FC<NavIdProps> = ({ id }) => {
             <Text style={{ marginBottom: 4 }}>Дата: <b>{event?.dateStart}</b></Text>
             
             {/* Меняем цвет текста на красный, если регистрация закрылась, для наглядности */}
-            <Text 
-              weight="2" 
-              style={{ 
-                marginBottom: 16, 
-                color: isRegistrationOpen ? 'inherit' : 'var(--vkui--color_text_negative)' 
-              }}
-            >
-              {isRegistrationOpen ? 'Окончание регистрации: ' : 'Регистрация закрыта: '}
-              <b>{event?.regEnd}</b>
-            </Text>
+            {event?.registerOpen && (
+              <Text 
+                weight="2" 
+                style={{ 
+                  marginBottom: 16, 
+                  color: isRegistrationOpen ? 'inherit' : 'var(--vkui--color_text_negative)' 
+                }}
+              >
+                {isRegistrationOpen ? 'Окончание регистрации: ' : 'Регистрация закрыта: '}
+                <b>{event?.regEnd}</b>
+              </Text>
+            )}
             
             <Text style={{ marginBottom: 24, whiteSpace: 'pre-wrap' }}>{event?.description}</Text>
 
             {/* Рендерим кнопку ТОЛЬКО если дата регистрации еще не прошла */}
-            {isRegistrationOpen && (
+            {isRegistrationOpen && event?.registerOpen && (
               <Button 
                 size="l"
                 stretched

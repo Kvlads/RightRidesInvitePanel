@@ -10,6 +10,7 @@ export interface AdminEventData {
   requireApproval: boolean;
   image?: string;
   isActive: boolean;
+  registerOpen: boolean;
   description: string;
   approvalText?: string;
   rejectionText?: string;
