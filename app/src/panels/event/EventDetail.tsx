@@ -8,7 +8,7 @@ import {
 // Импортируем иконку для внешней ссылки
 import { useParams, useRouteNavigator } from '@vkontakte/vk-mini-apps-router';
 import { EventDetail, fetchEventById } from '../../services/api';
-import { Icon16Link, Icon24ShareExternalOutline } from '@vkontakte/icons';
+import { Icon16Link } from '@vkontakte/icons';
 
 // Вспомогательная функция для проверки открытой регистрации
 const checkIsRegistrationOpen = (regEndStr?: string) => {

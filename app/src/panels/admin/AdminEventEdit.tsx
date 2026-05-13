@@ -33,7 +33,7 @@ export const AdminEventEdit: FC<NavIdProps> = ({id}) => {
   });
 
   const [broadcastMessage, setBroadcastMessage] = useState('');
-  const [isSending, setIsSending] = useState(false);
+  // const [isSending, setIsSending] = useState(false);
 
   const [imagePreview, setImagePreview] = useState<string | undefined>();
   const [loading, setLoading] = useState(false);
@@ -110,16 +110,16 @@ export const AdminEventEdit: FC<NavIdProps> = ({id}) => {
     }
   };
 
-  const handleSendMessage = async () => {
-    if (params?.id && broadcastMessage.trim()) {
-      setIsSending(true);
-      const success = await sendBroadcastMessage(Number(params.id), broadcastMessage);
-      if (success) {
-        setBroadcastMessage('');
-      }
-      setIsSending(false);
-    }
-  };
+  // const handleSendMessage = async () => {
+  //   if (params?.id && broadcastMessage.trim()) {
+  //     setIsSending(true);
+  //     const success = await sendBroadcastMessage(Number(params.id), broadcastMessage);
+  //     if (success) {
+  //       setBroadcastMessage('');
+  //     }
+  //     setIsSending(false);
+  //   }
+  // };
 
   const getImageUrl = (url: string) => {
     if (url.startsWith('/')) {
