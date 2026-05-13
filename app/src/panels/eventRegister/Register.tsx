@@ -5,11 +5,11 @@ import {
   NavIdProps, Group, SegmentedControl, Snackbar,
   PanelSpinner, Placeholder, Textarea, Checkbox
 } from '@vkontakte/vkui';
-import { Icon16ErrorCircleFill, Icon16Done, Icon56UsersOutline } from '@vkontakte/icons';
+import { Icon16ErrorCircleFill, Icon16Done, Icon56UsersOutline, Icon16Clear } from '@vkontakte/icons';
 import { submitRegistration, RegistrationData, uploadPhoto, fetchEventById, EventDetail } from '../../services/api';
 import { useParams, useRouteNavigator } from '@vkontakte/vk-mini-apps-router';
-// Импортируем компонент Яндекс Капчи
 import { SmartCaptcha } from '@yandex/smart-captcha';
+import imageCompression from 'browser-image-compression';
 
 interface PhotoState {
   id: string;
@@ -25,7 +25,7 @@ const initialFormState: RegistrationData = {
   plate: '',
   brand: '',
   passengers: '',
-  comment: '', // Поле для комментария
+  comment: '',
   type: 'participant',
 };
 
@@ -39,13 +39,11 @@ export const RegisterPanel: FC<NavIdProps> = ({id}) => {
   const [isParticipant, setIsParticipant] = useState(true);
   const [hasSelectedRole, setHasSelectedRole] = useState(false);
 
-  // Состояние для галочки обработки ПД
   const [isAgreed, setIsAgreed] = useState(false);
 
   const [formData, setFormData] = useState<RegistrationData>(initialFormState);
   const [photos, setPhotos] = useState<PhotoState[]>([]);
   
-  // Состояние для токена Яндекс Капчи
   const [captchaToken, setCaptchaToken] = useState('');
   
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -80,33 +78,53 @@ export const RegisterPanel: FC<NavIdProps> = ({id}) => {
     }
   };
 
-  const handlePhotoUpload = (e: ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoUpload = async (e: ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return;
     setErrors((prev) => ({ ...prev, photos: undefined }));
 
     const filesArray = Array.from(e.target.files).slice(0, 5 - photos.length);
 
-    filesArray.forEach((file) => {
+    const compressionOptions = {
+      maxSizeMB: 1.5,
+      maxWidthOrHeight: 1920,
+      useWebWorker: true,
+      fileType: 'image/jpeg',
+    };
+
+    filesArray.forEach(async (originalFile) => {
       const photoId = Math.random().toString(36).substring(7);
-      const tempUrl = URL.createObjectURL(file);
+      
+      const initialTempUrl = URL.createObjectURL(originalFile);
+      setPhotos((prev) => [...prev, { id: photoId, previewUrl: initialTempUrl, isLoading: true }]);
 
-      setPhotos((prev) => [...prev, { id: photoId, previewUrl: tempUrl, isLoading: true }]);
+      try {
+        const compressedFile = await imageCompression(originalFile, compressionOptions);
+        
+        const compressedTempUrl = URL.createObjectURL(compressedFile);
+        setPhotos((prev) => 
+          prev.map((p) => p.id === photoId ? { ...p, previewUrl: compressedTempUrl } : p)
+        );
 
-      uploadPhoto(file)
-        .then((uploadedUrl) => {
-          setPhotos((prev) => 
-            prev.map((photo) => 
-              photo.id === photoId ? { ...photo, isLoading: false, realUrl: uploadedUrl } : photo
-            )
-          );
-        })
-        .catch(() => {
-          setPhotos((prev) => prev.filter((p) => p.id !== photoId));
-          showSnackbar('Ошибка загрузки фото', 'error');
-        });
+        const uploadedUrl = await uploadPhoto(compressedFile);
+
+        setPhotos((prev) => 
+          prev.map((photo) => 
+            photo.id === photoId ? { ...photo, isLoading: false, realUrl: uploadedUrl } : photo
+          )
+        );
+      } catch (error) {
+        console.error('Ошибка сжатия или загрузки фото:', error);
+        setPhotos((prev) => prev.filter((p) => p.id !== photoId));
+        showSnackbar('Ошибка обработки фото. Попробуйте файл поменьше.', 'error');
+      }
     });
     
     e.target.value = '';
+  };
+
+  // Новая функция для удаления фото
+  const handleRemovePhoto = (photoIdToRemove: string) => {
+    setPhotos((prev) => prev.filter((photo) => photo.id !== photoIdToRemove));
   };
 
   const validateForm = (): boolean => {
@@ -191,7 +209,7 @@ export const RegisterPanel: FC<NavIdProps> = ({id}) => {
       
     } catch (error: any) {
       showSnackbar(error.message || 'Ошибка отправки заявки', 'error');
-      setIsSubmitting(false);
+      setCaptchaToken(''); // Сбрасываем капчу при ошибке
     } finally {
       setIsSubmitting(false);
     }
@@ -324,6 +342,8 @@ export const RegisterPanel: FC<NavIdProps> = ({id}) => {
                             }}
                           >
                             <img src={photo.previewUrl} alt="preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            
+                            {/* Оверлей при загрузке */}
                             {photo.isLoading && (
                               <div style={{ 
                                 position: 'absolute', inset: 0, display: 'flex', 
@@ -331,6 +351,23 @@ export const RegisterPanel: FC<NavIdProps> = ({id}) => {
                                 backgroundColor: 'rgba(0,0,0,0.5)' 
                               }}>
                                 <Spinner size="s" />
+                              </div>
+                            )}
+
+                            {/* Кнопка удаления (показываем, когда загрузка завершена) */}
+                            {!photo.isLoading && (
+                              <div
+                                onClick={() => handleRemovePhoto(photo.id)}
+                                style={{
+                                  position: 'absolute', top: 4, right: 4,
+                                  backgroundColor: 'rgba(0,0,0,0.6)',
+                                  borderRadius: '50%',
+                                  width: 20, height: 20,
+                                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                  cursor: 'pointer', zIndex: 2
+                                }}
+                              >
+                                <Icon16Clear fill="#fff" />
                               </div>
                             )}
                           </div>
@@ -342,7 +379,6 @@ export const RegisterPanel: FC<NavIdProps> = ({id}) => {
               )}
 
               <FormItem>
-                {/* Галочка согласия на обработку ПД */}
                 <Checkbox 
                   checked={isAgreed} 
                   onChange={(e) => setIsAgreed(e.target.checked)}
@@ -351,7 +387,6 @@ export const RegisterPanel: FC<NavIdProps> = ({id}) => {
                   Я согласен на обработку персональных данных
                 </Checkbox>
 
-                {/* Виджет Яндекс Капчи */}
                 <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'center' }}>
                   <SmartCaptcha 
                     sitekey={import.meta.env.VITE_YANDEX_CAPTCHA_SITE_KEY} 
@@ -364,7 +399,7 @@ export const RegisterPanel: FC<NavIdProps> = ({id}) => {
                   size="l" stretched mode="primary" 
                   loading={isSubmitting} 
                   onClick={handleSubmit}
-                  disabled={!captchaToken || isSubmitting || !isAgreed} // Блокируем, если не нажата галочка или нет капчи
+                  disabled={!captchaToken || isSubmitting || !isAgreed}
                   style={{ marginBottom: 8 }}
                 >
                   Отправить заявку
