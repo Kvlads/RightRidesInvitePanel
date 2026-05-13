@@ -9,7 +9,7 @@ import {
   Textarea
 } from '@vkontakte/vkui';
 import { useParams, useRouteNavigator } from '@vkontakte/vk-mini-apps-router';
-import { AdminEventData, exportParticipants, fetchAdminEvent, saveEvent, sendBroadcastMessage } from '../../services/adminApi';
+import { AdminEventData, exportParticipants, fetchAdminEvent, saveEvent } from '../../services/adminApi';
 import { uploadPhoto } from '../../services/api';
 
 export const AdminEventEdit: FC<NavIdProps> = ({id}) => {
@@ -32,7 +32,7 @@ export const AdminEventEdit: FC<NavIdProps> = ({id}) => {
     customRegister: null,
   });
 
-  const [broadcastMessage, setBroadcastMessage] = useState('');
+  // const [broadcastMessage, setBroadcastMessage] = useState('');
   // const [isSending, setIsSending] = useState(false);
 
   const [imagePreview, setImagePreview] = useState<string | undefined>();
