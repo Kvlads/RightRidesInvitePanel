@@ -5,8 +5,10 @@ import {
   NavIdProps,
   Box,
 } from '@vkontakte/vkui';
+// Импортируем иконку для внешней ссылки
 import { useParams, useRouteNavigator } from '@vkontakte/vk-mini-apps-router';
 import { EventDetail, fetchEventById } from '../../services/api';
+import { Icon16Link, Icon24ShareExternalOutline } from '@vkontakte/icons';
 
 // Вспомогательная функция для проверки открытой регистрации
 const checkIsRegistrationOpen = (regEndStr?: string) => {
@@ -39,6 +41,17 @@ const EventDetailPanel: FC<NavIdProps> = ({ id }) => {
 
   // Вычисляем флаг видимости кнопки
   const isRegistrationOpen = checkIsRegistrationOpen(event?.regEnd);
+
+  // Обработчик клика по кнопке регистрации
+  const handleRegisterClick = () => {
+    if (event?.customRegister) {
+      // Если есть внешняя ссылка - открываем её в новой вкладке
+      window.open(event.customRegister, '_blank', 'noopener,noreferrer');
+    } else {
+      // Иначе переходим на внутреннюю форму регистрации
+      routeNavigator.push(`/event/${params?.id}/register`);
+    }
+  };
 
   return (
     <Panel id={id}>
@@ -83,7 +96,8 @@ const EventDetailPanel: FC<NavIdProps> = ({ id }) => {
                 stretched
                 mode="primary"
                 style={{ marginBottom: 8 }}
-                onClick={() => routeNavigator.push(`/event/${params?.id}/register`)}
+                onClick={handleRegisterClick}
+                after={event?.customRegister ? <Icon16Link /> : undefined}
               >
                 Регистрация
               </Button>

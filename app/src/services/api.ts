@@ -23,6 +23,7 @@ export interface EventDetail {
   location: string;
   allowGuests: boolean;
   registerOpen: boolean;
+  customRegister: string | null,
 }
 
 export interface UserStatus {
@@ -100,6 +101,7 @@ export const fetchEventById = async (id: number): Promise<EventDetail> => {
     location: e.location || '',
     allowGuests: e.allowGuests,
     registerOpen: e.registerOpen,
+    customRegister: e.customRegister,
   };
 };
 

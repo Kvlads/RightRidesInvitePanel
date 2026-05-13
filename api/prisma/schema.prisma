@@ -30,36 +30,37 @@ model Event {
   requireApproval Boolean       @default(false)
   image           String?
   isActive        Boolean       @default(true)
-  registerOpen        Boolean       @default(true)
+  registerOpen    Boolean       @default(true)
   isDeleted       Boolean       @default(false)
   participants    Participant[]
   createdAt       DateTime      @default(now())
-  approvalText  String?         @db.Text
-  rejectionText String?         @db.Text
+  approvalText    String?       @db.Text
+  rejectionText   String?       @db.Text
+  customRegister  String?       @db.Text
 }
 
 model Participant {
-  id          Int      @id @default(autoincrement())
-  eventId     Int
-  userId      Int?
+  id         Int     @id @default(autoincrement())
+  eventId    Int
+  userId     Int?
   // Поля формы регистрации
-  email       String?
-  city        String?
-  fio         String?
-  plate       String?
-  brand       String?
-  passengers  String?
-  comment     String?  @db.Text
-  type        String   @default("participant") // "participant" или "guest"
-  
-  status      String   @default("pending") // "pending", "approved", "rejected"
-  photos      Photo[]
-  createdAt   DateTime @default(now())
+  email      String?
+  city       String?
+  fio        String?
+  plate      String?
+  brand      String?
+  passengers String?
+  comment    String? @db.Text
+  type       String  @default("participant") // "participant" или "guest"
+
+  status    String   @default("pending") // "pending", "approved", "rejected"
+  photos    Photo[]
+  createdAt DateTime @default(now())
 
   event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  user  User?  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user  User? @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  vkAttachments String?  @db.Text // Хранит строку "photo123_456,photo123_457"
+  vkAttachments String? @db.Text // Хранит строку "photo123_456,photo123_457"
   votes         Vote[]
 }
 
@@ -72,15 +73,15 @@ model Photo {
 
 // Новая модель для учета голосов
 model Vote {
-  id            Int         @id @default(autoincrement())
+  id            Int      @id @default(autoincrement())
   participantId Int
   vkId          BigInt
   name          String
-  decision      String      // "yes" или "no"
-  createdAt     DateTime    @default(now())
+  decision      String // "yes" или "no"
+  createdAt     DateTime @default(now())
 
-  participant   Participant @relation(fields: [participantId], references: [id], onDelete: Cascade)
+  participant Participant @relation(fields: [participantId], references: [id], onDelete: Cascade)
 
   // Один администратор может проголосовать за одну заявку только 1 раз
-  @@unique([participantId, vkId]) 
+  @@unique([participantId, vkId])
 }

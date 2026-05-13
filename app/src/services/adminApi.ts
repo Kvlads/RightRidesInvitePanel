@@ -14,6 +14,7 @@ export interface AdminEventData {
   description: string;
   approvalText?: string;
   rejectionText?: string;
+  customRegister: string | null;
 }
 
 export const deleteEvent = async (id: number): Promise<boolean> => {

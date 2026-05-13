@@ -29,6 +29,7 @@ export const AdminEventEdit: FC<NavIdProps> = ({id}) => {
     registerOpen: true,
     approvalText: '',
     rejectionText: '',
+    customRegister: null,
   });
 
   const [broadcastMessage, setBroadcastMessage] = useState('');
@@ -38,6 +39,7 @@ export const AdminEventEdit: FC<NavIdProps> = ({id}) => {
   const [loading, setLoading] = useState(false);
   
   const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [useExternalLink, setUseExternalLink] = useState(!!formData.customRegister);
 
   useEffect(() => {
     if (isEdit) {
@@ -50,6 +52,7 @@ export const AdminEventEdit: FC<NavIdProps> = ({id}) => {
           rejectionText: data.rejectionText || '',
         }));
         setImagePreview(data.image);
+        setUseExternalLink(!!data.customRegister)
       });
     }
   }, [isEdit, params?.id]);
@@ -185,6 +188,34 @@ export const AdminEventEdit: FC<NavIdProps> = ({id}) => {
                 enableTime={true}
               />
             </FormItem>
+
+            <FormItem>
+              <Checkbox 
+                checked={useExternalLink} 
+                onChange={(e) => {
+                  const checked = e.target.checked;
+                  setUseExternalLink(checked);
+                  if (!checked) setFormData(prev => ({ ...prev, customRegister: null }));
+                }}
+              >
+                Регистрация вне приложения
+              </Checkbox>
+            </FormItem>
+
+            {useExternalLink && (
+              <FormItem 
+                top="Ссылка на внешнюю регистрацию" 
+                status={formData.customRegister ? 'default' : 'error'}
+                bottom={formData.customRegister ? "" : "Введите корректный URL"}
+              >
+                <Input 
+                  type="url"
+                  placeholder="https://example.com/register"
+                  value={formData.customRegister || ''}
+                  onChange={(e) => setFormData(prev => ({ ...prev, customRegister: e.target.value }))}
+                />
+              </FormItem>
+            )}
 
             <FormItem top="Описание">
               <Textarea 
