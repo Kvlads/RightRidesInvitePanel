@@ -6,7 +6,9 @@ import path from 'path';
 import fs from 'fs';
 
 export const vk = new VK({
-  token: process.env.VK_BOT_TOKEN as string
+  token: process.env.VK_BOT_TOKEN as string,
+  apiTimeout: 30000,
+  uploadTimeout: 60000,
 });
 
 // Получаем порт из .env или используем 465 по умолчанию
@@ -43,27 +45,6 @@ export const sendApprovalRequestToAdmins = async (registrationId: number) => {
 
   if (!reg || !reg.photos.length) return;
 
-  // const uploadedPhotos = await Promise.all(
-  //   reg.photos.map(async (photo) => {
-  //     console.log('[uploadedPhotos] Тип1. Попытка отправки фото:', photo.url);
-  //     try {
-  //       const filePath = path.join(process.cwd(), photo.url);
-  //       if (fs.existsSync(filePath)) {
-  //         return await vk.upload.messagePhoto({            
-  //           source: { 
-  //             value: filePath,
-  //             timeout: 60e3,
-  //           }
-  //         });
-  //       }
-  //       return null;
-  //     } catch (e) {
-  //       console.error('[vk_photo_upload] upload error:', e);
-  //       return null;
-  //     }
-  //   })
-  // );
-
   // Последовательная загрузка изображений
   const photos = async () => {
     const attachments: PhotoAttachment[] = [];
@@ -80,6 +61,8 @@ export const sendApprovalRequestToAdmins = async (registrationId: number) => {
               timeout: 60e3,
             }
           });
+
+          setTimeout(() => {}, 1500);
 
           attachments.push(result);
         }

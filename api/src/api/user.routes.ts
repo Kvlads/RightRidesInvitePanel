@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { prisma } from '../prisma/client';
 import { vk, sendApprovalRequestToAdmins } from '../bot';
+import { adminQueue } from '../services/AdminNotifyQueue';
 
 export const userRouter = Router();
 
@@ -80,7 +81,7 @@ userRouter.post('/events/:id/register', async (req, res) => {
   });
 
   if (data.type === 'participant' && event.requireApproval) {
-    sendApprovalRequestToAdmins(registration.id).catch(console.error);
+    adminQueue.enqueue(() => sendApprovalRequestToAdmins(registration.id).catch(console.error));
   }
 
   res.json({ success: true, registration });
