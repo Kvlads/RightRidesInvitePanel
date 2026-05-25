@@ -25,6 +25,8 @@ class AdminNotifyQueue {
         }
       }
     }
+
+    this.isProcessing = false;
   }
 }
 
