@@ -1,4 +1,4 @@
-import { VK, MessageContext, Keyboard } from 'vk-io';
+import { VK, MessageContext, Keyboard, PhotoAttachment } from 'vk-io';
 import { HearManager } from '@vk-io/hear';
 import { prisma } from '../prisma/client';
 import nodemailer from 'nodemailer';
@@ -43,22 +43,59 @@ export const sendApprovalRequestToAdmins = async (registrationId: number) => {
 
   if (!reg || !reg.photos.length) return;
 
-  const uploadedPhotos = await Promise.all(
-    reg.photos.map(async (photo) => {
-      const filePath = path.join(process.cwd(), photo.url);
-      if (fs.existsSync(filePath)) {
-        return await vk.upload.messagePhoto({
-          source: { value: filePath }
-        });
-      }
-      return null;
-    })
-  );
+  // const uploadedPhotos = await Promise.all(
+  //   reg.photos.map(async (photo) => {
+  //     console.log('[uploadedPhotos] Тип1. Попытка отправки фото:', photo.url);
+  //     try {
+  //       const filePath = path.join(process.cwd(), photo.url);
+  //       if (fs.existsSync(filePath)) {
+  //         return await vk.upload.messagePhoto({            
+  //           source: { 
+  //             value: filePath,
+  //             timeout: 60e3,
+  //           }
+  //         });
+  //       }
+  //       return null;
+  //     } catch (e) {
+  //       console.error('[vk_photo_upload] upload error:', e);
+  //       return null;
+  //     }
+  //   })
+  // );
 
-  const attachmentStr = uploadedPhotos
+  // Последовательная загрузка изображений
+  const photos = async () => {
+    const attachments: PhotoAttachment[] = [];
+    for (let index = 0; index < reg.photos.length; index++) {
+      const photo = reg.photos[index];
+      // console.log('[vk_photo_upload photos] Загрузка изображения:', photo.url)
+
+      try {
+        const filePath = path.join(process.cwd(), photo.url);
+        if (fs.existsSync(filePath)) {
+          const result = await vk.upload.messagePhoto({            
+            source: { 
+              value: filePath,
+              timeout: 60e3,
+            }
+          });
+
+          attachments.push(result);
+        }
+      } catch (e) {
+        console.error('[vk_photo_upload photos] upload error:', e);
+      }
+    }
+
+    return attachments;
+  }
+
+  const attachmentStr = (await photos())
     .filter(Boolean)
     .map(p => `photo${p!.ownerId}_${p!.id}`)
     .join(',');
+
 
   await prisma.participant.update({
     where: { id: reg.id },
@@ -79,13 +116,17 @@ export const sendApprovalRequestToAdmins = async (registrationId: number) => {
     .callbackButton({ label: 'Против', payload: { cmd: 'vote', regId: reg.id, decision: 'no' }, color: 'negative' })
     .inline();
 
-  await vk.api.messages.send({
-    peer_id: adminChatId,
-    message: messageText,
-    attachment: attachmentStr,
-    keyboard,
-    random_id: Date.now()
-  });
+  try {
+    await vk.api.messages.send({
+      peer_id: adminChatId,
+      message: messageText,
+      attachment: attachmentStr,
+      keyboard,
+      random_id: Date.now()
+    });
+  } catch (e) {
+    console.error('[vk_message_send] message send error:', e);
+  }
 };
 
 // 2. ОБРАБОТЧИК: НАЖАТИЕ НА КНОПКИ ГОЛОСОВАНИЯ
@@ -99,7 +140,9 @@ vk.updates.on('message_event', async (context) => {
     await context.answer({ 
       type: 'show_snackbar', 
       text: decision === 'yes' ? 'Голосуем ЗА...' : 'Голосуем ПРОТИВ...' 
-    }).catch(() => {});
+    }).catch(() => {
+      console.error('[message_event] Ошибка вызова сообщения "Голосуем...."')
+    });
 
     // 2. Ищем заявку
     const reg = await prisma.participant.findUnique({
@@ -259,7 +302,9 @@ ${emailStatusText}
         message: newText,
         attachment: reg.vkAttachments || '',
         keyboard: Keyboard.builder().inline() 
-      }).catch(() => {});
+      }).catch(() => {
+        console.error('[message_event] Ошибка обновления сообщения заявки')
+      });
 
       return; 
     }
@@ -276,7 +321,9 @@ ${emailStatusText}
       message: newText,
       attachment: reg.vkAttachments || '',
       keyboard: updatedKeyboard
-    }).catch(() => {});
+    }).catch(() => {
+      console.error('[message_event] Ошибка изменения сообщения')
+    });
 
     return;
   }
