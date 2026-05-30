@@ -14,6 +14,8 @@ import { RequestDetailPanel } from './panels/event/EventUserRequestDetails';
 import { AdminEventsPanel } from './panels/admin/AdminEvents';
 import { AdminEventEdit } from './panels/admin/AdminEventEdit';
 import { AdminLogin } from './panels/admin/AdminLogin';
+import { AdminEventRequests } from './panels/admin/AdminEventRequests';
+
 
 export const App = () => {
   const { panel: activePanel = DEFAULT_VIEW_PANELS.HOME } = useActiveVkuiLocation();
@@ -35,6 +37,9 @@ export const App = () => {
           <AdminLogin id="admin-login" />
           <AdminEventsPanel id="admin-event-list" />
           <AdminEventEdit id="admin-event-edit" />
+          
+          <AdminEventRequests id="admin-event-requests" />
+          
         </View>
       </SplitCol>
     </SplitLayout>

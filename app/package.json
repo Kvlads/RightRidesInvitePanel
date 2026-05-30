@@ -20,7 +20,8 @@
     "@yandex/smart-captcha": "^2.9.1",
     "browser-image-compression": "^2.0.2",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "socket.io-client": "^4.8.3"
   },
   "devDependencies": {
     "@types/react": "^18.2.43",

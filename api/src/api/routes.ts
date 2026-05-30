@@ -8,6 +8,7 @@ import { upload } from '../middlewares/upload.middleware';
 import path from 'path';
 import fs from 'fs';
 import sharp from 'sharp';
+import { prisma } from '../prisma/client';
 
 export const apiRouter = Router();
 
@@ -23,30 +24,39 @@ apiRouter.post('/init', (req, res) => {
 });
 
 // Эндпоинт для входа администратора
-apiRouter.post('/auth/login', (req, res) => {
+apiRouter.post('/auth/login', async (req, res) => {
   const { login, password } = req.body;
+  if (!login || !password) return res.status(400).json({ error: 'Введите логин и пароль' });
 
-  // Берем данные из .env
-  const envLogin = process.env.APP_LOGIN;
-  const envPasswordHash = process.env.APP_PASSWORD;
+  const hashedPassword = crypto.createHash('md5').update(password).digest('hex');
+  const secret = process.env.JWT_SECRET || 'fallback_secret_key_123';
 
-  if (!login || !password) {
-    return res.status(400).json({ error: 'Введите логин и пароль' });
+  // 1. Ищем пользователя в базе
+  const dbUser = await prisma.adminUser.findUnique({ where: { login } });
+  
+  if (dbUser && dbUser.password === hashedPassword) {
+    const token = jwt.sign(
+      { 
+        id: dbUser.id, 
+        role: dbUser.role, // 'admin' или 'voter'
+        vkId: dbUser.vkId?.toString() 
+      }, 
+      secret, { expiresIn: '24h' }
+    );
+    return res.json({ success: true, token, role: dbUser.role });
   }
 
-  // Хешируем введенный пароль в MD5
-  const hashedPassword = crypto.createHash('md5').update(password).digest('hex');
-
-  // Сравниваем
-  if (login === envLogin && hashedPassword === envPasswordHash) {
-    // Пароль верный! Генерируем токен на 24 часа
+  // 2. Fallback: вход главного админа через .env (если база еще пустая)
+  if (login === process.env.APP_LOGIN && hashedPassword === process.env.APP_PASSWORD) {
     const token = jwt.sign(
-      { role: 'admin' }, 
-      process.env.JWT_SECRET || 'fallback_secret_key_123', 
-      { expiresIn: '24h' }
+      { 
+        id: -1, // Системный внутренний ID для .env админа
+        role: 'admin',
+        vkId: process.env.APP_VK_ID || null // Берем из .env, если есть
+      }, 
+      secret, { expiresIn: '24h' }
     );
-    
-    return res.json({ success: true, token });
+    return res.json({ success: true, token, role: 'admin' });
   }
 
   return res.status(401).json({ error: 'Неверный логин или пароль' });

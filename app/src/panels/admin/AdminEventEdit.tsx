@@ -301,11 +301,20 @@ export const AdminEventEdit: FC<NavIdProps> = ({id}) => {
 
         {isEdit && (
           <Group header={<Header>Управление участниками</Header>}>
-            <Box>
+            <Box style={{ padding: '0 15px 15px' }}>
+              
               <Button 
                 size="l" 
                 stretched 
-                mode="secondary" 
+                mode="primary" 
+                style={{ marginBottom: 20 }}
+                onClick={() => routeNavigator.push(`/admin/event/${params?.id}/requests`)}
+              >
+                Открыть список заявок (Голосование)
+              </Button>
+
+              <Button 
+                size="l" stretched mode="secondary" 
                 onClick={() => handleExport('participant')}
               >
                 Экспорт участников
@@ -314,35 +323,11 @@ export const AdminEventEdit: FC<NavIdProps> = ({id}) => {
               <div style={{ height: 10 }} />
 
               <Button 
-                size="l" 
-                stretched 
-                mode="secondary" 
+                size="l" stretched mode="secondary" 
                 onClick={() => handleExport('guest')}
               >
                 Экспорт гостей
               </Button>
-
-              {/* <div style={{ height: 20 }} />
-
-              <FormItem top="Сообщение участникам" style={{ padding: 0 }}>
-                <Textarea
-                  placeholder="Введите текст сообщения для рассылки"
-                  value={broadcastMessage}
-                  onChange={(e) => setBroadcastMessage(e.target.value)}
-                />
-              </FormItem>
-
-              <Button 
-                size="l" 
-                stretched 
-                mode="primary" 
-                loading={isSending}
-                disabled={!broadcastMessage.trim()}
-                onClick={handleSendMessage}
-                style={{ marginTop: 12 }}
-              >
-                Отправить сообщение участникам
-              </Button> */}
             </Box>
           </Group>
         )}

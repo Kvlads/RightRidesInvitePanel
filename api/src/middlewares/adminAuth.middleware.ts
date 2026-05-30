@@ -8,7 +8,10 @@ export const adminAuth = (req: Request, res: Response, next: any) => {
 
   const token = authHeader.split(' ')[1];
   try {
-    jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret_key_123');
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret_key_123');
+    
+    (req as any).user = decoded;
+    
     next();
   } catch (error) {
     console.log('[adminAuth] error', error);

@@ -6,43 +6,53 @@ import * as dotenv from 'dotenv';
 import * as path from 'path';
 import * as fs from 'fs';
 
-// Проверяем наличие файла для локальной разработки (Dev-режим)
 const envPath = path.resolve(process.cwd(), '../.env');
-
 if (fs.existsSync(envPath)) {
-  // Мы запускаем код локально, загружаем из файла
   dotenv.config({ path: envPath });
 } 
-// Если файла нет (Prod-режим в Docker), мы ничего не делаем.
-// Docker Compose УЖЕ положил все нужные ключи в process.env!
 
 import express from 'express';
+import { createServer } from 'http'; // Импортируем HTTP
+import { Server } from 'socket.io';  // Импортируем Socket.io
 import { prisma } from './prisma/client';
 import { apiRouter } from './api/routes';
 import { startBot } from './bot';
 
 const app = express();
+const httpServer = createServer(app); // Оборачиваем express в http-сервер
+
+// Инициализируем WebSockets и экспортируем io для использования в роутах
+export const io = new Server(httpServer, {
+  cors: { origin: '*' } // Настройте CORS строже для продакшена
+});
+
+io.on('connection', (socket) => {
+  console.log('🔗 WebSocket клиент подключен:', socket.id);
+  
+  // Клиент может подписаться на обновления конкретного мероприятия
+  socket.on('join_event', (eventId) => {
+    socket.join(`event_${eventId}`);
+    console.log(`Клиент ${socket.id} подписался на event_${eventId}`);
+  });
+});
+
 app.use(express.json({ limit: '10mb' })); 
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
-// Подключение маршрутов API
 app.use('/api/uploads', express.static(path.join(process.cwd(), 'uploads')));
-
 app.use('/api', apiRouter);
 
 const bootstrap = async () => {
   try {
-    // 1. Инициализация соединения с БД
     await prisma.$connect();
-    console.log('База данных подключена');
+    console.log('✅ База данных подключена');
 
-    // 2. Запуск бота
     await startBot();
 
-    // 3. Запуск HTTP-сервера
     const PORT = process.env.PORT || 3000;
-    app.listen(PORT, () => {
-      console.log(`API сервер запущен на порту ${PORT}`);
+    // ВАЖНО: Запускаем httpServer, а не app
+    httpServer.listen(PORT, () => {
+      console.log(`🚀 API сервер и WebSockets запущены на порту ${PORT}`);
     });
 
   } catch (error) {

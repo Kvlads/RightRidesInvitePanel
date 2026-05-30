@@ -85,3 +85,11 @@ model Vote {
   // Один администратор может проголосовать за одну заявку только 1 раз
   @@unique([participantId, vkId])
 }
+
+model AdminUser {
+  id       Int     @id @default(autoincrement())
+  login    String  @unique
+  password String  // md5 хеш
+  role     String  @default("voter") // "admin" или "voter"
+  vkId     BigInt? // Опциональная привязка к VK для синхронизации голосов
+}

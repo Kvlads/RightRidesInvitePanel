@@ -17,6 +17,26 @@ export interface AdminEventData {
   customRegister: string | null;
 }
 
+export interface VoteData {
+  id: number;
+  vkId: string;
+  name: string;
+  decision: 'yes' | 'no';
+}
+
+export interface RequestData {
+  id: number;
+  fio: string;
+  email: string | null;
+  brand: string;
+  plate: string;
+  passengers: string;
+  comment: string | null;
+  status: string;
+  photos: { id: number; url: string }[];
+  votes: VoteData[];
+}
+
 export const deleteEvent = async (id: number): Promise<boolean> => {
   await apiClient(`/admin/events/${id}`, { method: 'DELETE' });
   return true;
@@ -117,4 +137,28 @@ export const fetchEvents = async (): Promise<EventData[]> => {
       image: event.image || 'https://placehold.co/600x400/EEE/31343C',
     };
   });
+};
+
+// Запрос списка заявок
+export const fetchRequests = async (eventId: number): Promise<RequestData[]> => {
+  const token = localStorage.getItem('admin_token');
+  const res = await fetch(`/api/admin/events/${eventId}/requests`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  if (!res.ok) throw new Error('Ошибка загрузки заявок');
+  return res.json();
+};
+
+// Отправка голоса
+export const submitVote = async (requestId: number, decision: 'yes' | 'no'): Promise<boolean> => {
+  const token = localStorage.getItem('admin_token');
+  const res = await fetch(`/api/admin/requests/${requestId}/vote`, {
+    method: 'POST',
+    headers: { 
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}` 
+    },
+    body: JSON.stringify({ decision })
+  });
+  return res.ok;
 };
