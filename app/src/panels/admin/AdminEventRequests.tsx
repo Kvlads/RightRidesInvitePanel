@@ -50,7 +50,6 @@ export const AdminEventRequests: FC<NavIdProps> = ({ id }) => {
     }
   };
 
-  // 3. Вычисляемая статистика заявок (useMemo пересчитывает её автоматически при изменении массива)
   const stats = useMemo(() => {
     const total = requests.length;
     const approved = requests.filter(r => r.status === 'approved').length;
@@ -59,14 +58,10 @@ export const AdminEventRequests: FC<NavIdProps> = ({ id }) => {
     return { total, approved, rejected, pending };
   }, [requests]);
 
-  // 1. Умная сортировка: новые на рассмотрении (pending) сверху, закрытые (approved/rejected) снизу
   const sortedRequests = useMemo(() => {
     return [...requests].sort((a, b) => {
-      // Если у них разный статус (один pending, другой нет)
       if (a.status === 'pending' && b.status !== 'pending') return -1;
       if (a.status !== 'pending' && b.status === 'pending') return 1;
-      
-      // Если статусы одинаковой категории (оба активные или оба закрытые), сортируем по ID (новые выше)
       return b.id - a.id; 
     });
   }, [requests]);
@@ -89,7 +84,6 @@ export const AdminEventRequests: FC<NavIdProps> = ({ id }) => {
         socket.emit('join_event', params.id);
       });
 
-      // Обновление существующего голоса
       socket.on('vote_updated', (data: { participantId: number, newStatus: string, updatedParticipant: RequestData }) => {
         if (!data.updatedParticipant) return;
 
@@ -109,14 +103,11 @@ export const AdminEventRequests: FC<NavIdProps> = ({ id }) => {
         });
       });
 
-      // 2. Реализация real-time добавления новой заявки наверх списка
       socket.on('new_request', (data: { newParticipant: RequestData }) => {
         if (!data.newParticipant) return;
         
         setRequests((prevRequests) => {
-          // Защита от дублирования, если сокет сработал дважды
           if (prevRequests.some(r => r.id === data.newParticipant.id)) return prevRequests;
-          // Добавляем в массив (сортировка useMemo сама поднимет её наверх)
           return [data.newParticipant, ...prevRequests];
         });
         
@@ -177,7 +168,6 @@ export const AdminEventRequests: FC<NavIdProps> = ({ id }) => {
 
       <Div style={{ maxWidth: 600, margin: '0 auto', paddingBottom: 40 }}>
         
-        {/* 3. БЛОК СТАТИСТИКИ ЗАЯВОК */}
         <Card mode="tint" style={{ marginBottom: 24, padding: '12px 16px', backgroundColor: 'var(--vkui--color_background_secondary)' }}>
           <Header size="s" style={{ padding: 0, marginBottom: 8 }}>Статистика участников</Header>
           <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
@@ -195,7 +185,6 @@ export const AdminEventRequests: FC<NavIdProps> = ({ id }) => {
             Заявок пока нет.
           </Text>
         ) : (
-          // Рендерим уже отсортированный через useMemo список
           sortedRequests.map((req) => {
             const yesVotes = req.votes.filter(v => v.decision === 'yes');
             const noVotes = req.votes.filter(v => v.decision === 'no');
@@ -209,7 +198,6 @@ export const AdminEventRequests: FC<NavIdProps> = ({ id }) => {
                   marginBottom: 20, 
                   padding: 16, 
                   cursor: 'pointer',
-                  // Визуально слегка приглушаем закрытые карточки
                   opacity: req.status !== 'pending' ? 0.75 : 1 
                 }}
                 onClick={() => setSelectedRequest(req)}
@@ -232,13 +220,42 @@ export const AdminEventRequests: FC<NavIdProps> = ({ id }) => {
                   </HorizontalScroll>
                 )}
 
-                <div style={{ display: 'flex', gap: 16, marginBottom: 16, alignItems: 'center', flexWrap: 'wrap' }}>
-                  <Text style={{ color: 'var(--vkui--color_text_positive)', fontWeight: 'bold' }}>
-                    ЗА: {yesVotes.length}
-                  </Text>
-                  <Text style={{ color: 'var(--vkui--color_text_negative)', fontWeight: 'bold' }}>
-                    ПРОТИВ: {noVotes.length}
-                  </Text>
+                {/* ОБНОВЛЕННЫЙ БЛОК С ИМЕНАМИ */}
+                <div style={{ display: 'flex', gap: 24, marginBottom: 16, alignItems: 'flex-start', flexWrap: 'wrap' }}>
+                  
+                  {/* Колонка "ЗА" */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4, minWidth: 100 }}>
+                    <Text style={{ color: 'var(--vkui--color_text_positive)', fontWeight: 'bold' }}>
+                      ЗА: {yesVotes.length}
+                    </Text>
+                    {yesVotes.length > 0 && (
+                      <div style={{ display: 'flex', flexDirection: 'column' }}>
+                        {yesVotes.map(v => (
+                          <Text key={v.id} style={{ color: 'var(--vkui--color_text_secondary)', fontSize: 13 }}>
+                            • {v.name}
+                          </Text>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Колонка "ПРОТИВ" */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4, minWidth: 100 }}>
+                    <Text style={{ color: 'var(--vkui--color_text_negative)', fontWeight: 'bold' }}>
+                      ПРОТИВ: {noVotes.length}
+                    </Text>
+                    {noVotes.length > 0 && (
+                      <div style={{ display: 'flex', flexDirection: 'column' }}>
+                        {noVotes.map(v => (
+                          <Text key={v.id} style={{ color: 'var(--vkui--color_text_secondary)', fontSize: 13 }}>
+                            • {v.name}
+                          </Text>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Статус справа */}
                   <Text style={{ color: statusInfo.color, fontWeight: 'bold', marginLeft: 'auto' }}>
                     {statusInfo.label}
                   </Text>
@@ -270,7 +287,6 @@ export const AdminEventRequests: FC<NavIdProps> = ({ id }) => {
         )}
       </Div>
 
-      {/* Модальное окно просмотра деталей */}
       {selectedRequest && (
         <div 
           style={{

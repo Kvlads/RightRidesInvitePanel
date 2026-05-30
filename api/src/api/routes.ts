@@ -24,6 +24,7 @@ apiRouter.post('/init', (req, res) => {
 });
 
 // Эндпоинт для входа администратора
+// Эндпоинт для входа администратора и выборщиков
 apiRouter.post('/auth/login', async (req, res) => {
   const { login, password } = req.body;
   if (!login || !password) return res.status(400).json({ error: 'Введите логин и пароль' });
@@ -31,28 +32,28 @@ apiRouter.post('/auth/login', async (req, res) => {
   const hashedPassword = crypto.createHash('md5').update(password).digest('hex');
   const secret = process.env.JWT_SECRET || 'fallback_secret_key_123';
 
-  // 1. Ищем пользователя в базе
   const dbUser = await prisma.adminUser.findUnique({ where: { login } });
   
   if (dbUser && dbUser.password === hashedPassword) {
     const token = jwt.sign(
       { 
         id: dbUser.id, 
-        role: dbUser.role, // 'admin' или 'voter'
-        vkId: dbUser.vkId?.toString() 
+        role: dbUser.role, 
+        vkId: dbUser.vkId?.toString(),
+        login: dbUser.login // <--- ДОБАВИЛИ ЛОГИН СЮДА
       }, 
       secret, { expiresIn: '24h' }
     );
     return res.json({ success: true, token, role: dbUser.role });
   }
 
-  // 2. Fallback: вход главного админа через .env (если база еще пустая)
   if (login === process.env.APP_LOGIN && hashedPassword === process.env.APP_PASSWORD) {
     const token = jwt.sign(
       { 
-        id: -1, // Системный внутренний ID для .env админа
+        id: -1, 
         role: 'admin',
-        vkId: process.env.APP_VK_ID || null // Берем из .env, если есть
+        vkId: process.env.APP_VK_ID || null,
+        login: 'Главный Администратор' // <--- ДОБАВИЛИ ЛОГИН СЮДА
       }, 
       secret, { expiresIn: '24h' }
     );
