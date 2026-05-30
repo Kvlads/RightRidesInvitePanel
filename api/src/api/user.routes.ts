@@ -2,6 +2,8 @@ import { Router } from 'express';
 import { prisma } from '../prisma/client';
 import { vk, sendApprovalRequestToAdmins } from '../bot';
 import { adminQueue } from '../services/AdminNotifyQueue';
+// 1. Импортируем экземпляр WebSocket-сервера
+import { io } from '../main'; 
 
 export const userRouter = Router();
 
@@ -70,6 +72,7 @@ userRouter.post('/events/:id/register', async (req, res) => {
   const incomingPhotos = Array.isArray(photos) ? photos : Array.isArray(photoUrls) ? photoUrls : [];
   const photosToCreate = incomingPhotos.map((url: string) => ({ url }));
 
+  // 2. Создаем заявку и сразу подтягиваем связанные данные (фото и голоса)
   const registration = await prisma.participant.create({
     data: {
       eventId,
@@ -77,8 +80,19 @@ userRouter.post('/events/:id/register', async (req, res) => {
       ...data,
       status: event.requireApproval ? 'pending' : 'approved', 
       photos: { create: photosToCreate }
+    },
+    include: {
+      photos: true,
+      votes: true // Пустой массив, но нужен фронтенду для рендера
     }
   });
+
+  // 3. Отправляем WebSocket событие о новой заявке в комнату мероприятия
+  if (data.type === 'participant') {
+    io.to(`event_${eventId}`).emit('new_request', {
+      newParticipant: registration
+    });
+  }
 
   if (data.type === 'participant' && event.requireApproval) {
     adminQueue.enqueue(() => sendApprovalRequestToAdmins(registration.id).catch(console.error));

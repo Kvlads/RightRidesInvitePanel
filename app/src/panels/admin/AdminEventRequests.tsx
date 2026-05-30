@@ -1,13 +1,13 @@
-import { FC, useEffect, useState, ReactNode } from 'react';
+import { FC, useEffect, useState, ReactNode, useMemo } from 'react';
 import { 
   Panel, PanelHeader, PanelHeaderBack, 
   Button, Text, Spinner, NavIdProps,
   Card, Title, HorizontalScroll, Div, ButtonGroup,
-  MiniInfoCell, Snackbar // Добавили Snackbar
+  MiniInfoCell, Snackbar, Header
 } from '@vkontakte/vkui';
 import { Icon20UserOutline, Icon20MailOutline, Icon20ArticleOutline, Icon20InfoCircleOutline, Icon16ErrorCircleFill, Icon16Done } from '@vkontakte/icons';
 import { useParams, useRouteNavigator } from '@vkontakte/vk-mini-apps-router';
-import { fetchRequests, submitVote, RequestData } from '../../services/adminApi';
+import { fetchRequests, RequestData } from '../../services/adminApi';
 import { io, Socket } from 'socket.io-client';
 
 const STATUS_MAP: Record<string, { label: string, color: string }> = {
@@ -23,13 +23,9 @@ export const AdminEventRequests: FC<NavIdProps> = ({ id }) => {
   const [requests, setRequests] = useState<RequestData[]>([]);
   const [loading, setLoading] = useState(true);
   const [votingId, setVotingId] = useState<number | null>(null);
-
   const [selectedRequest, setSelectedRequest] = useState<RequestData | null>(null);
-  
-  // Добавили состояние для Snackbar
   const [snackbar, setSnackbar] = useState<ReactNode | null>(null);
 
-  // Функция показа уведомлений
   const showSnackbar = (text: string, type: 'success' | 'error') => {
     setSnackbar(
       <Snackbar
@@ -54,36 +50,48 @@ export const AdminEventRequests: FC<NavIdProps> = ({ id }) => {
     }
   };
 
+  // 3. Вычисляемая статистика заявок (useMemo пересчитывает её автоматически при изменении массива)
+  const stats = useMemo(() => {
+    const total = requests.length;
+    const approved = requests.filter(r => r.status === 'approved').length;
+    const rejected = requests.filter(r => r.status === 'rejected').length;
+    const pending = requests.filter(r => r.status === 'pending').length;
+    return { total, approved, rejected, pending };
+  }, [requests]);
+
+  // 1. Умная сортировка: новые на рассмотрении (pending) сверху, закрытые (approved/rejected) снизу
+  const sortedRequests = useMemo(() => {
+    return [...requests].sort((a, b) => {
+      // Если у них разный статус (один pending, другой нет)
+      if (a.status === 'pending' && b.status !== 'pending') return -1;
+      if (a.status !== 'pending' && b.status === 'pending') return 1;
+      
+      // Если статусы одинаковой категории (оба активные или оба закрытые), сортируем по ID (новые выше)
+      return b.id - a.id; 
+    });
+  }, [requests]);
+
   useEffect(() => {
     loadData();
 
     let socket: Socket;
     if (params?.id) {
-      // 🔥 УМНОЕ ОПРЕДЕЛЕНИЕ URL: 
-      // В дев-режиме стучимся на порт бэкенда (3000), в прод-режиме — на текущий адрес
       const socketUrl = window.location.hostname === 'localhost' 
         ? 'http://localhost:3000' 
         : window.location.origin;
 
       socket = io(socketUrl, { 
         path: '/socket.io',
-        transports: ['websocket', 'polling'] // Предпочитаем быстрый websocket
+        transports: ['websocket', 'polling']
       }); 
 
-      // Логируем успешное подключение
       socket.on('connect', () => {
-        console.log('✅ Успешно подключено к WebSocket-серверу:', socket.id);
         socket.emit('join_event', params.id);
       });
 
-      // Отлавливаем ошибки подключения (появятся во вкладке Console в F12)
-      socket.on('connect_error', (error) => {
-        console.error('❌ Ошибка WebSocket-соединения:', error.message);
-      });
-
+      // Обновление существующего голоса
       socket.on('vote_updated', (data: { participantId: number, newStatus: string, updatedParticipant: RequestData }) => {
         if (!data.updatedParticipant) return;
-        console.log('📥 Получено real-time обновление заявки:', data.participantId);
 
         setRequests((prevRequests) => 
           prevRequests.map((req) => 
@@ -100,13 +108,24 @@ export const AdminEventRequests: FC<NavIdProps> = ({ id }) => {
           return current;
         });
       });
+
+      // 2. Реализация real-time добавления новой заявки наверх списка
+      socket.on('new_request', (data: { newParticipant: RequestData }) => {
+        if (!data.newParticipant) return;
+        
+        setRequests((prevRequests) => {
+          // Защита от дублирования, если сокет сработал дважды
+          if (prevRequests.some(r => r.id === data.newParticipant.id)) return prevRequests;
+          // Добавляем в массив (сортировка useMemo сама поднимет её наверх)
+          return [data.newParticipant, ...prevRequests];
+        });
+        
+        showSnackbar(`📥 Поступила новая заявка от ${data.newParticipant.fio || 'участника'}!`, 'success');
+      });
     }
 
     return () => {
-      if (socket) {
-        console.log('🔌 Отключение WebSocket-клиента');
-        socket.disconnect();
-      }
+      if (socket) socket.disconnect();
     };
   }, [params?.id]);
 
@@ -126,14 +145,6 @@ export const AdminEventRequests: FC<NavIdProps> = ({ id }) => {
       if (!res.ok) {
         const errorData = await res.json();
         showSnackbar(errorData.error || 'Ошибка голосования', 'error');
-      } else {
-        // Принудительно запрашиваем свежие данные для себя, чтобы интерфейс 100% обновился мгновенно
-        const freshData = await fetchRequests(Number(params?.id));
-        setRequests(freshData);
-        if (selectedRequest) {
-          const updatedSelected = freshData.find(r => r.id === selectedRequest.id);
-          if (updatedSelected) setSelectedRequest(updatedSelected);
-        }
       }
     } catch (error) {
       console.error('Ошибка голосования', error);
@@ -165,12 +176,27 @@ export const AdminEventRequests: FC<NavIdProps> = ({ id }) => {
       </PanelHeader>
 
       <Div style={{ maxWidth: 600, margin: '0 auto', paddingBottom: 40 }}>
-        {requests.length === 0 ? (
-          <Text style={{ textAlign: 'center', marginTop: 40, color: 'var(--vkui--color_text_secondary)' }}>
+        
+        {/* 3. БЛОК СТАТИСТИКИ ЗАЯВОК */}
+        <Card mode="tint" style={{ marginBottom: 24, padding: '12px 16px', backgroundColor: 'var(--vkui--color_background_secondary)' }}>
+          <Header size="s" style={{ padding: 0, marginBottom: 8 }}>Статистика участников</Header>
+          <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+            <Text>Всего заявок: <b style={{ fontSize: 16 }}>{stats.total}</b></Text>
+            <Text style={{ color: 'var(--vkui--color_text_secondary)' }}>Ожидают: <b>{stats.pending}</b></Text>
+            <Text style={{ color: 'var(--vkui--color_text_positive)' }}>Одобрено: <b>{stats.approved}</b></Text>
+            <Text style={{ color: 'var(--vkui--color_text_negative)' }}>Отклонено: <b>{stats.rejected}</b></Text>
+          </div>
+        </Card>
+
+        <Header style={{ paddingLeft: 0 }}>Список анкет</Header>
+
+        {sortedRequests.length === 0 ? (
+          <Text style={{ textAlign: 'center', marginTop: 20, color: 'var(--vkui--color_text_secondary)' }}>
             Заявок пока нет.
           </Text>
         ) : (
-          requests.map((req) => {
+          // Рендерим уже отсортированный через useMemo список
+          sortedRequests.map((req) => {
             const yesVotes = req.votes.filter(v => v.decision === 'yes');
             const noVotes = req.votes.filter(v => v.decision === 'no');
             const statusInfo = STATUS_MAP[req.status] || { label: req.status, color: 'black' };
@@ -179,7 +205,13 @@ export const AdminEventRequests: FC<NavIdProps> = ({ id }) => {
               <Card 
                 key={req.id} 
                 mode="shadow" 
-                style={{ marginBottom: 20, padding: 16, cursor: 'pointer' }}
+                style={{ 
+                  marginBottom: 20, 
+                  padding: 16, 
+                  cursor: 'pointer',
+                  // Визуально слегка приглушаем закрытые карточки
+                  opacity: req.status !== 'pending' ? 0.75 : 1 
+                }}
                 onClick={() => setSelectedRequest(req)}
               >
                 <Title level="2" style={{ marginBottom: 8 }}>{req.brand} • {req.plate}</Title>
@@ -238,6 +270,7 @@ export const AdminEventRequests: FC<NavIdProps> = ({ id }) => {
         )}
       </Div>
 
+      {/* Модальное окно просмотра деталей */}
       {selectedRequest && (
         <div 
           style={{
@@ -265,7 +298,6 @@ export const AdminEventRequests: FC<NavIdProps> = ({ id }) => {
             <MiniInfoCell before={<Icon20ArticleOutline />}>Госномер: {selectedRequest.plate}</MiniInfoCell>
             <MiniInfoCell before={<Icon20InfoCircleOutline />}>Пассажиры: {selectedRequest.passengers}</MiniInfoCell>
             
-            {/* Добавили статус в модалку */}
             <div style={{ marginTop: 12, padding: '0 12px' }}>
               <Text weight="2" style={{ color: (STATUS_MAP[selectedRequest.status] || {color: 'black'}).color }}>
                 Статус заявки: <b>{(STATUS_MAP[selectedRequest.status] || {label: selectedRequest.status}).label}</b>
@@ -301,7 +333,6 @@ export const AdminEventRequests: FC<NavIdProps> = ({ id }) => {
         </div>
       )}
 
-      {/* Выводим Snackbar на экран */}
       {snackbar}
     </Panel>
   );
