@@ -3,6 +3,7 @@ import { prisma } from '../prisma/client';
 import { adminAuth } from '../middlewares/adminAuth.middleware';
 import { io } from '../main';
 import crypto from 'crypto';
+import { sendDecisionEmail } from '../bot';
 
 export const adminRouter = Router();
 adminRouter.use(adminAuth);
@@ -154,6 +155,8 @@ adminRouter.post('/requests/:id/vote', async (req: any, res) => {
         where: { id: participantId },
         data: { status: newStatus }
       });
+
+      sendDecisionEmail(participantId).catch(console.error);
     }
 
     // Получаем финальное состояние для отправки по сокетам
