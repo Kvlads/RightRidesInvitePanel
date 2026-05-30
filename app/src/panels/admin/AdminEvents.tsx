@@ -77,12 +77,22 @@ export const AdminEventsPanel: FC<NavIdProps> = ({id}) => {
         
         {/* Кнопка создания видна ТОЛЬКО админу */}
         {role === 'admin' && (
-          <Button 
-            size="l" mode="primary" style={{ margin: '10px 15px' }}
-            onClick={() => routeNavigator.push('/admin/event')}
-          >
-            Создать новое мероприятие
-          </Button>
+          <div style={{ padding: '0 15px', marginBottom: 20, display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <Button 
+              size="l" stretched mode="primary" 
+              onClick={() => routeNavigator.push('/admin/event')}
+            >
+              Создать новое мероприятие
+            </Button>
+            
+            {/* НОВАЯ КНОПКА ПЕРСОНАЛА */}
+            <Button 
+              size="l" stretched mode="secondary" 
+              onClick={() => routeNavigator.push('/admin/staff')}
+            >
+              Управление персоналом
+            </Button>
+          </div>
         )}
 
         <Header>Наши мероприятия</Header>

@@ -162,3 +162,34 @@ export const submitVote = async (requestId: number, decision: 'yes' | 'no'): Pro
   });
   return res.ok;
 };
+
+// --- Управление персоналом ---
+export interface StaffUser {
+  id: number;
+  login: string;
+  role: 'admin' | 'voter';
+  vkId: string | null;
+}
+
+export const fetchStaff = async (): Promise<StaffUser[]> => {
+  return await apiClient<StaffUser[]>('/admin/staff');
+};
+
+export const createStaff = async (data: any): Promise<StaffUser> => {
+  return await apiClient<StaffUser>('/admin/staff', {
+    method: 'POST',
+    body: data
+  });
+};
+
+export const updateStaff = async (id: number, data: any): Promise<StaffUser> => {
+  return await apiClient<StaffUser>(`/admin/staff/${id}`, {
+    method: 'PUT',
+    body: data
+  });
+};
+
+export const deleteStaff = async (id: number): Promise<boolean> => {
+  await apiClient(`/admin/staff/${id}`, { method: 'DELETE' });
+  return true;
+};

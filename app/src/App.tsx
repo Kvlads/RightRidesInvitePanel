@@ -15,6 +15,7 @@ import { AdminEventsPanel } from './panels/admin/AdminEvents';
 import { AdminEventEdit } from './panels/admin/AdminEventEdit';
 import { AdminLogin } from './panels/admin/AdminLogin';
 import { AdminEventRequests } from './panels/admin/AdminEventRequests';
+import { AdminStaffList } from './panels/admin/AdminStaffList';
 
 
 export const App = () => {
@@ -35,6 +36,7 @@ export const App = () => {
           <RequestDetailPanel id="event-user-request-item" />
 
           <AdminLogin id="admin-login" />
+          <AdminStaffList id="admin-staff-list" />
           <AdminEventsPanel id="admin-event-list" />
           <AdminEventEdit id="admin-event-edit" />
           

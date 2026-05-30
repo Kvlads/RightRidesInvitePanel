@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { prisma } from '../prisma/client';
 import { adminAuth } from '../middlewares/adminAuth.middleware';
 import { io } from '../main';
+import crypto from 'crypto';
 
 export const adminRouter = Router();
 adminRouter.use(adminAuth);
@@ -190,3 +191,85 @@ adminRouter.get('/events/:id/requests', async (req, res) => {
   
   res.json(requests);
 });
+
+// Получить список всех администраторов и выборщиков
+adminRouter.get('/staff', async (req: any, res) => {
+  if (req.user?.role !== 'admin') {
+    return res.status(403).json({ error: 'Доступ запрещен' });
+  }
+  
+  const staff = await prisma.adminUser.findMany({
+    select: { id: true, login: true, role: true, vkId: true },
+    orderBy: { id: 'asc' }
+  });
+  
+  // Меняем BigInt на String перед отправкой (если вдруг ломается JSON)
+  const safeStaff = staff.map(user => ({
+    ...user,
+    vkId: user.vkId ? user.vkId.toString() : null
+  }));
+  
+  res.json(safeStaff);
+});
+
+// Создать нового сотрудника
+adminRouter.post('/staff', async (req: any, res) => {
+  if (req.user?.role !== 'admin') return res.status(403).json({ error: 'Доступ запрещен' });
+  
+  const { login, password, role, vkId } = req.body;
+  if (!login || !password) return res.status(400).json({ error: 'Логин и пароль обязательны' });
+
+  // Проверка уникальности
+  const existing = await prisma.adminUser.findUnique({ where: { login } });
+  if (existing) return res.status(400).json({ error: 'Пользователь с таким логином уже существует' });
+
+  const hashedPassword = crypto.createHash('md5').update(password).digest('hex');
+
+  const newUser = await prisma.adminUser.create({
+    data: {
+      login,
+      password: hashedPassword,
+      role: role || 'voter',
+      vkId: vkId ? BigInt(vkId) : null
+    },
+    select: { id: true, login: true, role: true, vkId: true }
+  });
+
+  res.json(newUser);
+});
+
+// Обновить сотрудника (роль, vkId или пароль)
+adminRouter.put('/staff/:id', async (req: any, res) => {
+  if (req.user?.role !== 'admin') return res.status(403).json({ error: 'Доступ запрещен' });
+  
+  const { login, password, role, vkId } = req.body;
+  const updateData: any = { login, role, vkId: vkId ? BigInt(vkId) : null };
+
+  // Если передали новый пароль — обновляем и его
+  if (password && password.trim() !== '') {
+    updateData.password = crypto.createHash('md5').update(password).digest('hex');
+  }
+
+  try {
+    const updatedUser = await prisma.adminUser.update({
+      where: { id: Number(req.params.id) },
+      data: updateData,
+      select: { id: true, login: true, role: true, vkId: true }
+    });
+    res.json(updatedUser);
+  } catch (err) {
+    res.status(400).json({ error: 'Ошибка обновления' });
+  }
+});
+
+// Удалить сотрудника
+adminRouter.delete('/staff/:id', async (req: any, res) => {
+  if (req.user?.role !== 'admin') return res.status(403).json({ error: 'Доступ запрещен' });
+  
+  await prisma.adminUser.delete({
+    where: { id: Number(req.params.id) }
+  });
+  
+  res.json({ success: true });
+});
+// --- КОНЕЦ УПРАВЛЕНИЯ ПЕРСОНАЛОМ ---

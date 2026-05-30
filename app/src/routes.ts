@@ -24,6 +24,7 @@ export const DEFAULT_VIEW_PANELS = {
   ADMIN_EVENT_EDIT: 'admin-event-edit',
   ADMIN_LOGIN: 'admin-login',
   ADMIN_EVENT_REQUESTS: 'admin-event-requests',
+  ADMIN_STAFF_LIST: 'admin-staff-list',
 } as const;
 
 export const routes = RoutesConfig.create([
@@ -43,6 +44,7 @@ export const routes = RoutesConfig.create([
       createPanel(DEFAULT_VIEW_PANELS.ADMIN_EVENT_EDIT, `/admin/event`, []),
       createPanel(DEFAULT_VIEW_PANELS.ADMIN_EVENT_EDIT, `/admin/event/:id`, []),
       createPanel(DEFAULT_VIEW_PANELS.ADMIN_EVENT_REQUESTS, `/admin/event/:id/requests`, []),
+      createPanel(DEFAULT_VIEW_PANELS.ADMIN_STAFF_LIST, `/admin/staff`, []),
     ]),
   ]),
 ]);
