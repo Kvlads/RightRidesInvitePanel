@@ -141,26 +141,17 @@ export const fetchEvents = async (): Promise<EventData[]> => {
 
 // Запрос списка заявок
 export const fetchRequests = async (eventId: number): Promise<RequestData[]> => {
-  const token = localStorage.getItem('admin_token');
-  const res = await fetch(`/api/admin/events/${eventId}/requests`, {
-    headers: { Authorization: `Bearer ${token}` }
-  });
-  if (!res.ok) throw new Error('Ошибка загрузки заявок');
-  return res.json();
+  // apiClient сам подставит токен и сам проверит 401 ошибку!
+  return await apiClient<RequestData[]>(`/admin/events/${eventId}/requests`);
 };
 
-// Отправка голоса
+// Отправка голоса (теперь через apiClient)
 export const submitVote = async (requestId: number, decision: 'yes' | 'no'): Promise<boolean> => {
-  const token = localStorage.getItem('admin_token');
-  const res = await fetch(`/api/admin/requests/${requestId}/vote`, {
+  await apiClient(`/admin/requests/${requestId}/vote`, {
     method: 'POST',
-    headers: { 
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}` 
-    },
-    body: JSON.stringify({ decision })
+    body: { decision } // apiClient сам сделает JSON.stringify
   });
-  return res.ok;
+  return true;
 };
 
 // --- Управление персоналом ---

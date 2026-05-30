@@ -7,7 +7,7 @@ import {
 } from '@vkontakte/vkui';
 import { Icon20UserOutline, Icon20MailOutline, Icon20ArticleOutline, Icon20InfoCircleOutline, Icon16ErrorCircleFill, Icon16Done } from '@vkontakte/icons';
 import { useParams, useRouteNavigator } from '@vkontakte/vk-mini-apps-router';
-import { fetchRequests, RequestData } from '../../services/adminApi';
+import { fetchRequests, RequestData, submitVote } from '../../services/adminApi';
 import { io, Socket } from 'socket.io-client';
 
 const STATUS_MAP: Record<string, { label: string, color: string }> = {
@@ -124,22 +124,27 @@ export const AdminEventRequests: FC<NavIdProps> = ({ id }) => {
     e.stopPropagation(); 
     try {
       setVotingId(requestId);
-      const res = await fetch(`/api/admin/requests/${requestId}/vote`, {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('admin_token')}` 
-        },
-        body: JSON.stringify({ decision })
-      });
-
-      if (!res.ok) {
-        const errorData = await res.json();
-        showSnackbar(errorData.error || 'Ошибка голосования', 'error');
+      
+      // 1. Отправляем голос (apiClient сделает всю грязную работу)
+      await submitVote(requestId, decision);
+      
+      // 2. Запрашиваем свежие данные для интерфейса
+      const freshData = await fetchRequests(Number(params?.id));
+      setRequests(freshData);
+      
+      // 3. Обновляем модалку, если она открыта
+      if (selectedRequest) {
+        const updatedSelected = freshData.find(r => r.id === selectedRequest.id);
+        if (updatedSelected) setSelectedRequest(updatedSelected);
       }
-    } catch (error) {
-      console.error('Ошибка голосования', error);
-      showSnackbar('Сетевая ошибка при отправке голоса', 'error');
+      
+    } catch (error: any) {
+      console.error('Ошибка голосования:', error);
+      // Если это ошибка 401, apiClient уже кинул нас на страницу логина, 
+      // но если это другая ошибка (например, "Голосование закрыто"), покажем Snackbar
+      if (error.message !== 'Сессия истекла. Пожалуйста, авторизуйтесь заново.') {
+        showSnackbar(error.message || 'Сетевая ошибка', 'error');
+      }
     } finally {
       setVotingId(null);
     }
