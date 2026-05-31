@@ -12,7 +12,16 @@ const getUserRole = () => {
   try {
     const token = localStorage.getItem('admin_token');
     if (!token) return 'voter';
-    const payload = JSON.parse(atob(token.split('.')[1]));
+
+    const base64Url = token.split('.')[1];
+  
+    let base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    
+    while (base64.length % 4 !== 0) {
+      base64 += '=';
+    }
+
+    const payload = JSON.parse(atob(base64));
     return payload.role || 'voter';
   } catch (e) {
     return 'voter';
