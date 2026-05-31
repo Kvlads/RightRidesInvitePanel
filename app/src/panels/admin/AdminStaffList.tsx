@@ -2,7 +2,7 @@ import { FC, useEffect, useState, ReactNode } from 'react';
 import { 
   Panel, PanelHeader, PanelHeaderBack, 
   Button, Text, Spinner, NavIdProps,
-  Card, Title, Div, Group, FormItem, Input, Select, Snackbar, IconButton, Box
+  Card, Title, Div, FormItem, Input, Select, Snackbar, IconButton, Box
 } from '@vkontakte/vkui';
 import { Icon16ErrorCircleFill, Icon16Done, Icon28EditOutline, Icon28DeleteOutline } from '@vkontakte/icons';
 import { useRouteNavigator } from '@vkontakte/vk-mini-apps-router';
