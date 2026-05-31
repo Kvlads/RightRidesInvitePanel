@@ -27,12 +27,12 @@ export const io = new Server(httpServer, {
 });
 
 io.on('connection', (socket) => {
-  console.log('🔗 WebSocket клиент подключен:', socket.id);
+  // console.log('🔗 WebSocket клиент подключен:', socket.id);
   
   // Клиент может подписаться на обновления конкретного мероприятия
   socket.on('join_event', (eventId) => {
     socket.join(`event_${eventId}`);
-    console.log(`Клиент ${socket.id} подписался на event_${eventId}`);
+    // console.log(`Клиент ${socket.id} подписался на event_${eventId}`);
   });
 });
 

@@ -138,10 +138,10 @@ adminRouter.post('/requests/:id/vote', async (req: any, res) => {
     const yesVotes = allVotes.filter(v => v.decision === 'yes').length;
     const noVotes = allVotes.filter(v => v.decision === 'no').length;
 
-    const totalUsersInDb = await prisma.adminUser.count();
+    const totalUsersInDb = (await prisma.adminUser.count())+1;
     const totalEligibleVoters = totalUsersInDb > 0 ? totalUsersInDb : 1;
     
-    const threshold = totalEligibleVoters * 0.6; 
+    const threshold = totalEligibleVoters * 0.7; 
     let newStatus = 'pending';
 
     if (noVotes > threshold) {
