@@ -157,7 +157,7 @@ export const AdminEventRequests: FC<NavIdProps> = ({ id }) => {
   if (loading) {
     return (
       <Panel id={id}>
-        <PanelHeader before={<PanelHeaderBack onClick={() => routeNavigator.back()} />}>Голосование</PanelHeader>
+        <PanelHeader before={<PanelHeaderBack onClick={() => routeNavigator.push('/admin')} />}>Голосование</PanelHeader>
         <div style={{ display: 'flex', justifyContent: 'center', marginTop: 100 }}>
           <Spinner size="l" />
         </div>
@@ -167,7 +167,7 @@ export const AdminEventRequests: FC<NavIdProps> = ({ id }) => {
 
   return (
     <Panel id={id}>
-      <PanelHeader before={<PanelHeaderBack onClick={() => routeNavigator.back()} />}>
+      <PanelHeader before={<PanelHeaderBack onClick={() => routeNavigator.push('/admin')} />}>
         Голосование
       </PanelHeader>
 

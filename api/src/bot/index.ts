@@ -75,7 +75,7 @@ export const sendApprovalRequestToAdmins = async (registrationId: number) => {
 
   // Формируем ссылку на админ-панель (используем APP_URL из .env)
   const baseUrl = process.env.APP_URL || 'https://ваш-домен.ru';
-  const voteUrl = `${baseUrl}/#/admin/event/${reg.eventId}/requests`;
+  const voteUrl = `https://app.rightrides.ru/#/admin/event/${reg.eventId}/requests`;
 
   const messageText = `🚗 Новая заявка на «${reg.event.title}»\n\n` +
     `👤 Участник: ${reg.fio}\n` +
