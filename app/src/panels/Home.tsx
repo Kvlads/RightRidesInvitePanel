@@ -68,7 +68,7 @@ export const Home: FC<HomeProps> = () => {
               onClick={() => routeNavigator.push(`event/${event.id}`, {})}
             >
               <img src={'/api'+event?.image} alt="Event" style={{ width: '100%', borderRadius: 8, marginBottom: 10, marginTop: 15, }} />
-              <Box style={{ marginBottom: 10 }}>{event.date}. {event.title}</Box>
+              <Box style={{ marginBottom: 10, whiteSpace: 'wrap' }}>{event.date}. {event.title}</Box>
             </Button>
           ))
         ) : (

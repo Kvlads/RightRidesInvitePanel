@@ -171,7 +171,7 @@ export const AdminEventRequests: FC<NavIdProps> = ({ id }) => {
         Голосование
       </PanelHeader>
 
-      <Div style={{ maxWidth: 600, margin: '0 auto', paddingBottom: 40 }}>
+      <Div style={{ width: '90%', maxWidth: 600, margin: '0 auto', paddingBottom: 40 }}>
         
         <Card mode="tint" style={{ marginBottom: 24, padding: '12px 16px', backgroundColor: 'var(--vkui--color_background_secondary)' }}>
           <Header size="s" style={{ padding: 0, marginBottom: 8 }}>Статистика участников</Header>
@@ -203,7 +203,7 @@ export const AdminEventRequests: FC<NavIdProps> = ({ id }) => {
                   marginBottom: 20, 
                   padding: 16, 
                   cursor: 'pointer',
-                  opacity: req.status !== 'pending' ? 0.75 : 1 
+                  opacity: req.status !== 'pending' ? 0.75 : 1, 
                 }}
                 onClick={() => setSelectedRequest(req)}
               >
@@ -211,7 +211,7 @@ export const AdminEventRequests: FC<NavIdProps> = ({ id }) => {
                 <Text style={{ marginBottom: 4 }}><b>Владелец:</b> {req.fio}</Text>
 
                 {req.photos.length > 0 && (
-                  <HorizontalScroll style={{ marginBottom: 16, marginTop: 16 }}>
+                  <HorizontalScroll style={{ marginBottom: 16, marginTop: 16, width: '100%' }}>
                     <div style={{ display: 'flex', gap: 8 }}>
                       {req.photos.map(photo => (
                         <img 
