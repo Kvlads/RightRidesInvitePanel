@@ -79,6 +79,7 @@ export const sendApprovalRequestToAdmins = async (registrationId: number) => {
 
   const messageText = `🚗 Новая заявка на «${reg.event.title}»\n\n` +
     `👤 Участник: ${reg.fio}\n` +
+    `👤 Телефон: ${reg.phone}\n` +
     `📧 Email: ${reg.email || 'Не указан'}\n` +
     `🚘 Марка: ${reg.brand}\n` +
     `🔢 Госномер: ${reg.plate}\n` +

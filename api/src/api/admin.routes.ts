@@ -66,6 +66,7 @@ adminRouter.post('/events/:id/participants', async (req, res) => {
   
   res.json(participants.map(p => ({
     name: p.fio || p.user?.name || 'Не указано',
+    phone: p.phone,
     vkId: p.user?.vkId?.toString() || 'Нет VK ID',
     email: p.email || 'Не указан',
     city: p.city || 'Не указан',

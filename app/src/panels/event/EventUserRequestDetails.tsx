@@ -51,6 +51,12 @@ export const RequestDetailPanel: FC<NavIdProps> = ({id}) => {
                 {requestData.fio}
               </InfoRow>
             </SimpleCell>
+
+            <SimpleCell multiline readOnly>
+              <InfoRow header="Телефон">
+                {requestData.phone}
+              </InfoRow>
+            </SimpleCell>
             
             <SimpleCell multiline readOnly>
               <InfoRow header="Госномер">

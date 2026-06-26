@@ -318,6 +318,7 @@ export const AdminEventRequests: FC<NavIdProps> = ({ id }) => {
             <MiniInfoCell before={<Icon20MailOutline />}>{selectedRequest.email || 'Нет email'}</MiniInfoCell>
             <MiniInfoCell before={<Icon20ArticleOutline />}>Госномер: {selectedRequest.plate}</MiniInfoCell>
             <MiniInfoCell before={<Icon20InfoCircleOutline />}>Пассажиры: {selectedRequest.passengers}</MiniInfoCell>
+            <MiniInfoCell before={<Icon20InfoCircleOutline />}>Телефон: {selectedRequest.phone}</MiniInfoCell>
             
             <div style={{ marginTop: 12, padding: '0 12px' }}>
               <Text weight="2" style={{ color: (STATUS_MAP[selectedRequest.status] || {color: 'black'}).color }}>

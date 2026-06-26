@@ -22,6 +22,7 @@ const initialFormState: RegistrationData = {
   email: '',
   city: '',
   fio: '',
+  phone: '',
   plate: '',
   brand: '',
   passengers: '',
@@ -133,6 +134,9 @@ export const RegisterPanel: FC<NavIdProps> = ({id}) => {
 
     if (!formData.fio.trim()) newErrors.fio = 'Обязательное поле';
     if (!formData.city.trim()) newErrors.city = 'Обязательное поле';
+    if (!formData.phone.trim()) newErrors.phone = 'Обязательное поле';
+
+    if (formData.phone && formData.phone.trim().length < 5) newErrors.phone = 'Введите номер телефона';
     
     if (!formData.email.trim()) {
       newErrors.email = 'Обязательное поле';
@@ -190,6 +194,7 @@ export const RegisterPanel: FC<NavIdProps> = ({id}) => {
       email: formData.email.trim(),
       fio: formData.fio,
       city: formData.city,
+      phone: formData.phone,
       plate: formData.plate,
       brand: formData.brand,
       passengers: formData.passengers,
@@ -286,6 +291,10 @@ export const RegisterPanel: FC<NavIdProps> = ({id}) => {
 
               <FormItem top="ФИО" status={errors.fio ? 'error' : 'default'} bottom={errors.fio}>
                 <Input name="fio" value={formData.fio} onChange={handleInputChange} placeholder="Иванов Иван" />
+              </FormItem>
+
+              <FormItem top="Телефон" status={errors.phone ? 'error' : 'default'} bottom={errors.phone}>
+                <Input name="phone" value={formData.phone} onChange={handleInputChange} placeholder="+7 ..." />
               </FormItem>
               
               <FormItem top="Город" status={errors.city ? 'error' : 'default'} bottom={errors.city}>

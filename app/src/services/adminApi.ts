@@ -30,6 +30,7 @@ export interface RequestData {
   email: string | null;
   brand: string;
   plate: string;
+  phone: string;
   passengers: string;
   comment: string | null;
   status: string;

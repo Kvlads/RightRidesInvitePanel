@@ -34,6 +34,7 @@ export interface RegistrationData {
   email: string;
   city: string;
   fio: string;
+  phone: string;
   plate: string;
   brand: string;
   passengers: string;
@@ -173,6 +174,7 @@ export const fetchRequestDetail = async (id: number): Promise<RequestDetail> => 
     id: r.id,
     city: r.city || '',
     fio: r.fio || '',
+    phone: r.phone || '',
     plate: r.plate || '',
     brand: r.brand || '',
     passengers: r.passengers || '0',

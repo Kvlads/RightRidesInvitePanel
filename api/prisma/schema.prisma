@@ -47,6 +47,7 @@ model Participant {
   email      String?
   city       String?
   fio        String?
+  phone      String?
   plate      String?
   brand      String?
   passengers String?
